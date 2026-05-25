@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LaundryKasir PWA</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0284c7">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div id="auth-screen" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <i data-lucide="washing-machine" class="brand-icon"></i>
+        <h2>LaundryKasir PWA</h2>
+        <p>Silakan masuk ke sistem kasir</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="username" required placeholder="Masukkan username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary w-full">Masuk</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="app-screen" class="app-layout hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <i data-lucide="washing-machine"></i>
+        <span>LaundryKasir</span>
+      </div>
+      <div class="user-profile">
+        <div class="avatar"><i data-lucide="user"></i></div>
+        <div>
+          <h4 id="user-display-name">Nama Kasir</h4>
+          <small id="user-display-role">Kasir</small>
+        </div>
+      </div>
+      <nav class="nav-menu">
+        <a href="#" data-page="dashboard" class="nav-item active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+        <a href="#" data-page="transaksi" class="nav-item"><i data-lucide="shopping-cart"></i> Transaksi</a>
+        <a href="#" data-page="pelanggan" class="nav-item"><i data-lucide="users"></i> Pelanggan</a>
+        <a href="#" data-page="layanan" class="nav-item admin-only"><i data-lucide="layers"></i> Layanan Harga</a>
+        <a href="#" data-page="laporan" class="nav-item admin-only"><i data-lucide="file-text"></i> Laporan</a>
+        <a href="#" data-page="tracking" class="nav-item"><i data-lucide="search"></i> Cek Status</a>
+        <a href="#" id="btn-logout-desktop" class="nav-item text-danger"><i data-lucide="log-out"></i> Keluar</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <h2 id="page-title">Dashboard</h2>
+          <div class="date-display" id="current-date">Senin, 25 Mei 2026</div>
+        </div>
+        <button id="btn-logout-mobile" class="btn btn-danger mobile-only-btn"><i data-lucide="log-out"></i></button>
+      </header>
+
+      <div id="page-wrapper">
+        
+        <section id="page-dashboard" class="page-view">
+          <div class="stats-grid">
+            <div class="card stat-card blue">
+              <div class="stat-info"><span>Transaksi Hari Ini</span><h3 id="stat-trx-count">0</h3></div>
+              <i data-lucide="shopping-bag"></i>
+            </div>
+            <div class="card stat-card green">
+              <div class="stat-info"><span>Pendapatan Hari Ini</span><h3 id="stat-income">Rp 0</h3></div>
+              <i data-lucide="wallet"></i>
+            </div>
+            <div class="card stat-card orange">
+              <div class="stat-info"><span>Order Proses</span><h3 id="stat-process">0</h3></div>
+              <i data-lucide="refresh-cw"></i>
+            </div>
+            <div class="card stat-card purple">
+              <div class="stat-info"><span>Belum Diambil</span><h3 id="stat-unpaid">0</h3></div>
+              <i data-lucide="package"></i>
+            </div>
+          </div>
+          
+          <div class="dashboard-details">
+            <div class="card">
+              <h3>Aktivitas Transaksi Terakhir</h3>
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Pelanggan</th>
+                      <th>Total</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboard-latest-trx"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="page-transaksi" class="page-view hidden">
+             <div class="action-header">
+    <button class="btn btn-primary" id="btn-add-trx"><i data-lucide="plus"></i> Transaksi Baru</button>
+    <button class="btn btn-success" id="btn-export-excel"><i data-lucide="file-spreadsheet"></i> Export Excel</button>
+    <input type="text" placeholder="Cari nota / nama..." class="search-input" id="search-trx">
+  </div>
+          <div class="action-header">
+            <button class="btn btn-primary" id="btn-add-trx"><i data-lucide="plus"></i> Transaksi Baru</button>
+            <input type="text" placeholder="Cari nota / nama..." class="search-input" id="search-trx">
+          </div>
+          <div class="card table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Pelanggan</th>
+                  <th>Total</th>
+                  <th>Status Laundry</th>
+                  <th>Pembayaran</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-transaksi-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="page-pelanggan" class="page-view hidden">
+          <div class="action-header">
+            <button class="btn btn-primary" id="btn-add-pelanggan"><i data-lucide="plus"></i> Pelanggan Baru</button>
+            <input type="text" placeholder="Cari nama pelanggan..." class="search-input" id="search-pelanggan">
+          </div>
+          <div class="card table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nama</th>
+                  <th>No HP</th>
+                  <th>Alamat</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-pelanggan-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="page-layanan" class="page-view hidden">
+          <div class="action-header">
+            <button class="btn btn-primary" id="btn-add-layanan"><i data-lucide="plus"></i> Tambah Layanan</button>
+          </div>
+          <div class="card table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nama Layanan</th>
+                  <th>Harga</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="table-layanan-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+     <section id="page-laporan" class="page-view hidden">
+  <div class="card">
+    <div class="form-group">
+      <label>Dari Tanggal</label>
+      <input type="date" id="report-start-date">
+    </div>
+    <div class="form-group">
+      <label>Sampai Tanggal</label>
+      <input type="date" id="report-end-date">
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+      <button class="btn btn-primary" id="btn-filter-report" style="flex: 1;">Proses Filter</button>
+      <button class="btn btn-success" id="btn-export-excel" style="flex: 1;">
+        <i data-lucide="file-spreadsheet"></i> Export Excel
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="card text-center" style="margin-bottom:0;">
+      <h4>Total Transaksi</h4>
+      <h2 id="rep-count">0</h2>
+    </div>
+    <div class="card text-center" style="margin-bottom:0;">
+      <h4>Total Pendapatan</h4>
+      <h2 id="rep-income" class="text-primary">Rp 0</h2>
+    </div>
+  </div>
+</section>
+
+
+        <section id="page-tracking" class="page-view hidden">
+          <div class="card text-center">
+            <h3>Cek Status Laundry</h3>
+            <p style="color: var(--text-muted); margin-bottom: 15px;">Masukkan Nomor ID Nota Transaksi</p>
+            <div class="form-group">
+              <input type="text" id="track-id-input" placeholder="Contoh: TRX-123456" style="text-align: center; font-weight: bold; text-transform: uppercase;">
+            </div>
+            <button class="btn btn-primary w-full" id="btn-track-submit">Periksa Nota</button>
+            <div id="track-result" class="m-t-20 hidden"></div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <a href="#" data-page="dashboard" class="bottom-item active"><i data-lucide="layout-dashboard"></i><span>Home</span></a>
+      <a href="#" data-page="transaksi" class="bottom-item"><i data-lucide="shopping-cart"></i><span>Transaksi</span></a>
+      <a href="#" data-page="pelanggan" class="bottom-item"><i data-lucide="users"></i><span>Pelanggan</span></a>
+      <a href="#" data-page="tracking" class="bottom-item"><i data-lucide="search"></i><span>Cek</span></a>
+    </nav>
+  </div>
+
+  <div class="modal hidden" id="global-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Form Data</h3>
+        <button class="close-modal" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body-content"></div>
+    </div>
+  </div>
+
+  <div id="thermal-invoice" class="print-only"></div>
+  <script src="app.js"></script>
+</body>
+</html>
