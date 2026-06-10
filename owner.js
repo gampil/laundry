@@ -29,7 +29,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function submitOwnerLogin() {
     const pin = document.getElementById('input-owner-pin').value;
-    if (pin === "12345") {
+    if (pin === "1234") {
         localStorage.setItem('owner_logged_in', "true");
         showMainApp();
     } else {
