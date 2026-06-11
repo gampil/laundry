@@ -11,8 +11,8 @@ let tenantName = localStorage.getItem('tenant_name') || "Pilih Cabang Terlebih D
 // Global Data Storage
 let orders = [];
 let expenses = [];
-let branches = []; 
-let cashiers = []; 
+let branches = [];
+let cashiers = [];
 let cashflowChartInstance = null;
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -37,7 +37,7 @@ function showMainApp() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('main-app').classList.remove('hidden');
     updateTenantUI();
-    loadMasterDatabase(); 
+    loadMasterDatabase();
 }
 
 function submitOwnerLogin() {
@@ -57,7 +57,7 @@ function logoutOwner() {
 }
 
 function updateTenantUI() {
-    if(document.getElementById('ui-tenant-name')) {
+    if (document.getElementById('ui-tenant-name')) {
         document.getElementById('ui-tenant-name').innerText = tenantName;
     }
 }
@@ -74,15 +74,15 @@ async function loadMasterDatabase() {
     try {
         const response = await fetch(`${MASTER_SCRIPT_URL}?action=getMasterData`);
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             branches = result.branches || [];
             cashiers = result.cashiers || [];
-            
-            renderBranchesGrid(); 
+
+            renderBranchesGrid();
             renderCashiersGrid();
-            
-            if(SCRIPT_URL) {
+
+            if (SCRIPT_URL) {
                 fetchBranchAnalyticsData();
             }
         }
@@ -98,33 +98,33 @@ async function loadMasterDatabase() {
 async function createNewBranch() {
     const nameInput = document.getElementById('new-branch-name');
     const urlInput = document.getElementById('new-branch-url');
-    
+
     const name = nameInput.value.trim();
     const url = urlInput.value.trim();
-    
-    if(!name || !url) return alert("Harap isi seluruh input form pendaftaran cabang!");
-    
+
+    if (!name || !url) return alert("Harap isi seluruh input form pendaftaran cabang!");
+
     const branchId = 'CAB-' + Date.now();
-    
+
     try {
         const payload = {
             action: 'addBranch',
-            id: branchId,    
+            id: branchId,
             name: name,
             url: url
         };
-        
+
         const response = await fetch(MASTER_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
         const res = await response.json();
-        
-        if(res.status === 'success') {
+
+        if (res.status === 'success') {
             triggerNotification("Cabang Baru Berhasil Didaftarkan!");
             nameInput.value = "";
             urlInput.value = "";
-            loadMasterDatabase(); 
+            loadMasterDatabase();
         } else {
             alert("Gagal mendaftarkan cabang: " + res.message);
         }
@@ -137,13 +137,13 @@ async function createNewBranch() {
 // Mengganti renderBranchesGrid lama agar memunculkan tombol Edit & Hapus
 function renderBranchesGrid() {
     const container = document.getElementById('branch-list-container');
-    if(!container) return;
-    
-    if(branches.length === 0) {
+    if (!container) return;
+
+    if (branches.length === 0) {
         container.innerHTML = `<div class="col-span-2 text-center text-slate-400 py-6 italic">Belum ada cabang terdaftar.</div>`;
         return;
     }
-    
+
     container.innerHTML = branches.map(b => {
         const isActive = (b.url === SCRIPT_URL);
         return `
@@ -179,8 +179,8 @@ function renderBranchesGrid() {
 // -----------------------------------------------------------------------
 function openEditBranchModal(id) {
     const branch = branches.find(b => b.id === id);
-    if(!branch) return;
-    
+    if (!branch) return;
+
     document.getElementById('edit-branch-id').value = branch.id;
     document.getElementById('edit-branch-name').value = branch.name;
     document.getElementById('edit-branch-url').value = branch.url;
@@ -195,22 +195,22 @@ async function submitEditBranch() {
     const id = document.getElementById('edit-branch-id').value;
     const name = document.getElementById('edit-branch-name').value.trim();
     const url = document.getElementById('edit-branch-url').value.trim();
-    
-    if(!name || !url) return alert("Data cabang tidak boleh kosong!");
+
+    if (!name || !url) return alert("Data cabang tidak boleh kosong!");
     document.getElementById('editBranchModal').classList.add('opacity-50');
-    
+
     try {
         const payload = { action: 'editBranch', id: id, name: name, url: url };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
-        
-        if(res.status === 'success') {
+
+        if (res.status === 'success') {
             triggerNotification(`Data Cabang berhasil diperbarui!`);
             closeEditBranchModal();
             loadMasterDatabase(); // Refresh data grid
         }
-    } catch(e) {
-        console.error(e); 
+    } catch (e) {
+        console.error(e);
         closeEditBranchModal();
         triggerNotification("Perintah update dikirim ke Master.");
         setTimeout(loadMasterDatabase, 1500);
@@ -220,19 +220,19 @@ async function submitEditBranch() {
 }
 
 async function deleteBranch(id) {
-    if(!confirm("Hapus Cabang ini? (Hanya menghapus koneksi di Dashboard Master, tidak menghapus data asli di dalam Spreadsheet Cabangnya).")) return;
+    if (!confirm("Hapus Cabang ini? (Hanya menghapus koneksi di Dashboard Master, tidak menghapus data asli di dalam Spreadsheet Cabangnya).")) return;
     triggerNotification("Memproses hapus cabang...");
-    
+
     try {
         const payload = { action: 'deleteBranch', id: id };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
-        
-        if(res.status === 'success') {
+
+        if (res.status === 'success') {
             triggerNotification(`Cabang berhasil dihapus!`);
             // Jika cabang yang dihapus sedang aktif, kosongkan sesi
             const deletedBranch = branches.find(b => b.id === id);
-            if(deletedBranch && deletedBranch.url === SCRIPT_URL) {
+            if (deletedBranch && deletedBranch.url === SCRIPT_URL) {
                 SCRIPT_URL = "";
                 tenantName = "Pilih Cabang Terlebih Dahulu";
                 localStorage.removeItem('tenant_script_url');
@@ -242,8 +242,8 @@ async function deleteBranch(id) {
             }
             loadMasterDatabase();
         }
-    } catch(e) {
-        console.error(e); 
+    } catch (e) {
+        console.error(e);
         triggerNotification("Perintah hapus dikirim.");
         setTimeout(loadMasterDatabase, 1500);
     }
@@ -254,7 +254,7 @@ function selectBranch(name, url) {
     tenantName = name;
     localStorage.setItem('tenant_script_url', url);
     localStorage.setItem('tenant_name', name);
-    
+
     updateTenantUI();
     renderBranchesGrid();
     fetchBranchAnalyticsData();
@@ -276,13 +276,13 @@ function closeCashierModal() {
 
 function renderCashiersGrid() {
     const container = document.getElementById('cashier-grid-container');
-    if(!container) return;
-    
-    if(cashiers.length === 0) {
+    if (!container) return;
+
+    if (cashiers.length === 0) {
         container.innerHTML = `<div class="col-span-2 text-center text-slate-400 py-6 italic">Belum ada akun kasir terdaftar.</div>`;
         return;
     }
-    
+
     container.innerHTML = cashiers.map(c => `
         <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-3">
@@ -306,28 +306,28 @@ function renderCashiersGrid() {
 async function saveNewCashier() {
     const name = document.getElementById('modal-cashier-name').value.trim();
     const pin = document.getElementById('modal-cashier-pin').value.trim();
-    
-    if(!name || !pin) return alert("Harap lengkapi nama kasir dan PIN!");
-    
-    const cashierId = 'KSR-' + Date.now(); 
-    document.getElementById('cashierModal').classList.add('opacity-50'); 
-    
+
+    if (!name || !pin) return alert("Harap lengkapi nama kasir dan PIN!");
+
+    const cashierId = 'KSR-' + Date.now();
+    document.getElementById('cashierModal').classList.add('opacity-50');
+
     try {
         const payload = { action: 'addCashier', id: cashierId, name: name, pin: pin };
-        
+
         const response = await fetch(MASTER_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
         const res = await response.json();
-        
-        if(res.status === 'success') {
+
+        if (res.status === 'success') {
             triggerNotification(`Kasir ${name} berhasil didaftarkan!`);
             closeCashierModal();
-            loadMasterDatabase(); 
+            loadMasterDatabase();
         }
-    } catch(e) {
-        console.error("Gagal simpan kasir:", e); 
+    } catch (e) {
+        console.error("Gagal simpan kasir:", e);
         closeCashierModal();
         triggerNotification(`Perintah simpan ${name} dikirim.`);
         setTimeout(loadMasterDatabase, 1500);
@@ -338,8 +338,8 @@ async function saveNewCashier() {
 
 function openEditCashierModal(id) {
     const cashier = cashiers.find(c => c.id === id);
-    if(!cashier) return;
-    
+    if (!cashier) return;
+
     document.getElementById('edit-cashier-id').value = cashier.id;
     document.getElementById('edit-cashier-name').value = cashier.name;
     document.getElementById('edit-cashier-pin').value = cashier.pin;
@@ -354,22 +354,22 @@ async function submitEditCashier() {
     const id = document.getElementById('edit-cashier-id').value;
     const name = document.getElementById('edit-cashier-name').value.trim();
     const pin = document.getElementById('edit-cashier-pin').value.trim();
-    
-    if(!name || !pin) return alert("Data tidak boleh kosong!");
+
+    if (!name || !pin) return alert("Data tidak boleh kosong!");
     document.getElementById('editCashierModal').classList.add('opacity-50');
-    
+
     try {
         const payload = { action: 'editCashier', id: id, name: name, pin: pin };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
-        
-        if(res.status === 'success') {
+
+        if (res.status === 'success') {
             triggerNotification(`Data Kasir berhasil diperbarui!`);
             closeEditCashierModal();
             loadMasterDatabase();
         }
-    } catch(e) {
-        console.error(e); 
+    } catch (e) {
+        console.error(e);
         closeEditCashierModal();
         triggerNotification("Perintah update dikirim.");
         setTimeout(loadMasterDatabase, 1500);
@@ -379,20 +379,20 @@ async function submitEditCashier() {
 }
 
 async function deleteCashier(id) {
-    if(!confirm("Anda yakin ingin menghapus akses kasir ini?")) return;
+    if (!confirm("Anda yakin ingin menghapus akses kasir ini?")) return;
     triggerNotification("Memproses hapus data...");
-    
+
     try {
         const payload = { action: 'deleteCashier', id: id };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
-        
-        if(res.status === 'success') {
+
+        if (res.status === 'success') {
             triggerNotification(`Akses Kasir berhasil dihapus!`);
             loadMasterDatabase();
         }
-    } catch(e) {
-        console.error(e); 
+    } catch (e) {
+        console.error(e);
         triggerNotification("Perintah hapus dikirim.");
         setTimeout(loadMasterDatabase, 1500);
     }
@@ -405,12 +405,12 @@ const parseDateString = (dateStr) => {
     if (!dateStr) return null;
     try {
         const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return null; 
+        if (isNaN(d.getTime())) return null;
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
-        return { 
-            dateStr: `${year}-${month}-${day}`, 
+        return {
+            dateStr: `${year}-${month}-${day}`,
             monthStr: `${year}-${month}`,
             timestamp: d.getTime()
         };
@@ -420,11 +420,11 @@ const parseDateString = (dateStr) => {
 async function fetchBranchAnalyticsData() {
     if (!SCRIPT_URL) return;
     showLoadingStates();
-    
+
     try {
         const response = await fetch(`${SCRIPT_URL}?action=read`);
         const result = await response.json();
-        
+
         if (result && (result.transactions || result.expenses)) {
             orders = result.transactions || [];
             expenses = result.expenses || [];
@@ -443,10 +443,10 @@ async function fetchBranchAnalyticsData() {
 function toggleCustomDateFilter() {
     const range = document.getElementById('analytics-filter-range').value;
     const container = document.getElementById('custom-date-container');
-    
+
     if (range === 'custom') {
         container.classList.remove('hidden');
-        if(!document.getElementById('filter-start').value) {
+        if (!document.getElementById('filter-start').value) {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filter-start').value = today;
             document.getElementById('filter-end').value = today;
@@ -460,21 +460,21 @@ function toggleCustomDateFilter() {
 function applyAnalyticsFilter() {
     const range = document.getElementById('analytics-filter-range').value;
     const now = new Date();
-    const jktTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    const jktTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
     const todayStr = jktTime.toISOString().split('T')[0];
     const currentTimestamp = jktTime.getTime();
-    
+
     let filteredOrders = [];
     let filteredExpenses = [];
 
     if (range === 'custom') {
         const startVal = document.getElementById('filter-start').value;
         const endVal = document.getElementById('filter-end').value;
-        
+
         if (startVal && endVal) {
-            const startObj = new Date(startVal); startObj.setHours(0,0,0,0);
-            const endObj = new Date(endVal); endObj.setHours(23,59,59,999);
-            
+            const startObj = new Date(startVal); startObj.setHours(0, 0, 0, 0);
+            const endObj = new Date(endVal); endObj.setHours(23, 59, 59, 999);
+
             filteredOrders = orders.filter(o => {
                 const parsed = parseDateString(o.date);
                 if (!parsed) return false;
@@ -495,7 +495,7 @@ function applyAnalyticsFilter() {
             if (range === 'hari-ini') return parsed.dateStr === todayStr;
             if (range === '7-hari') return (currentTimestamp - parsed.timestamp) <= 7 * 24 * 60 * 60 * 1000;
             if (range === '30-hari') return (currentTimestamp - parsed.timestamp) <= 30 * 24 * 60 * 60 * 1000;
-            return true; 
+            return true;
         });
 
         filteredExpenses = expenses.filter(e => {
@@ -508,17 +508,29 @@ function applyAnalyticsFilter() {
         });
     }
 
-    const grossIncome = filteredOrders.filter(o => o.paymentStatus !== "Belum Bayar" && o.status !== "Dibatalkan").reduce((sum, o) => sum + Number(o.total || 0), 0);
+    // HITUNG TOTAL
+    const validOrders = filteredOrders.filter(o => o.paymentStatus !== "Belum Bayar" && o.status !== "Dibatalkan");
+    const grossIncome = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
     const totalExpense = filteredExpenses.reduce((sum, e) => sum + Number(e.nominal || 0), 0);
     const netProfit = grossIncome - totalExpense;
 
+    // HITUNG METODE PEMBAYARAN
+    const tTunai = validOrders.filter(o => o.method === 'Tunai / Cash').reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const tQris = validOrders.filter(o => o.method === 'QRIS').reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const tTransfer = validOrders.filter(o => o.method === 'Transfer Bank').reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+    // UPDATE UI KOTAK
     document.getElementById('stat-income').innerText = formatRupiah(grossIncome);
     document.getElementById('stat-expense').innerText = formatRupiah(totalExpense);
     document.getElementById('stat-profit').innerText = formatRupiah(netProfit);
     document.getElementById('stat-orders').innerText = `${filteredOrders.length} Nota`;
 
+    if (document.getElementById('stat-tunai')) document.getElementById('stat-tunai').innerText = formatRupiah(tTunai);
+    if (document.getElementById('stat-qris')) document.getElementById('stat-qris').innerText = formatRupiah(tQris);
+    if (document.getElementById('stat-transfer')) document.getElementById('stat-transfer').innerText = formatRupiah(tTransfer);
+
     const profitIndicator = document.getElementById('profit-indicator');
-    if(netProfit >= 0) {
+    if (netProfit >= 0) {
         profitIndicator.className = "text-[10px] theme-color font-semibold bg-cyan-50 px-2 py-0.5 rounded-full";
         profitIndicator.innerText = "Laba Bersih Toko (Surplus)";
     } else {
@@ -526,13 +538,15 @@ function applyAnalyticsFilter() {
         profitIndicator.innerText = "Defisit Keuangan (Minus)";
     }
 
+    // RENDER TABEL
+    renderIncomeTable(filteredOrders);
     renderExpensesTable(filteredExpenses);
     generateCashflowChart(filteredOrders, filteredExpenses);
 }
 
 function generateCashflowChart(filteredOrders, filteredExpenses) {
     const ctx = document.getElementById('chart-cashflow');
-    if(!ctx) return;
+    if (!ctx) return;
 
     if (cashflowChartInstance) cashflowChartInstance.destroy();
 
@@ -540,17 +554,17 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
 
     filteredOrders.forEach(o => {
         const parsed = parseDateString(o.date);
-        if(!parsed) return;
-        if(!dateMap[parsed.dateStr]) dateMap[parsed.dateStr] = { income: 0, expense: 0 };
-        if(o.paymentStatus !== "Belum Bayar" && o.status !== "Dibatalkan") {
+        if (!parsed) return;
+        if (!dateMap[parsed.dateStr]) dateMap[parsed.dateStr] = { income: 0, expense: 0 };
+        if (o.paymentStatus !== "Belum Bayar" && o.status !== "Dibatalkan") {
             dateMap[parsed.dateStr].income += Number(o.total || 0);
         }
     });
 
     filteredExpenses.forEach(e => {
         const parsed = parseDateString(e.tanggal || e.date);
-        if(!parsed) return;
-        if(!dateMap[parsed.dateStr]) dateMap[parsed.dateStr] = { income: 0, expense: 0 };
+        if (!parsed) return;
+        if (!dateMap[parsed.dateStr]) dateMap[parsed.dateStr] = { income: 0, expense: 0 };
         dateMap[parsed.dateStr].expense += Number(e.nominal || 0);
     });
 
@@ -579,9 +593,9 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
 
 function renderExpensesTable(filteredExpenses) {
     const tbody = document.getElementById('expenses-table-body');
-    if(!tbody) return;
+    if (!tbody) return;
 
-    if(filteredExpenses.length === 0) {
+    if (filteredExpenses.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 italic">Tidak ada catatan pengeluaran operasional pada periode ini.</td></tr>`;
         return;
     }
@@ -589,7 +603,7 @@ function renderExpensesTable(filteredExpenses) {
     tbody.innerHTML = filteredExpenses.map(e => {
         const parsed = parseDateString(e.tanggal || e.date);
         const dateDisplay = parsed ? parsed.dateStr : '-';
-        
+
         return `
         <tr class="hover:bg-slate-50/80 transition-all">
             <td class="p-3">${dateDisplay}</td>
@@ -603,6 +617,50 @@ function renderExpensesTable(filteredExpenses) {
     }).join('');
 }
 
+function renderIncomeTable(filteredOrders) {
+    const tbody = document.getElementById('income-table-body');
+    if (!tbody) return;
+
+    if (filteredOrders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 italic">Tidak ada catatan transaksi pemasukan pada periode ini.</td></tr>`;
+        return;
+    }
+
+    // Urutkan nota dari yang terbaru
+    const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    tbody.innerHTML = sortedOrders.map(o => {
+        const parsed = parseDateString(o.date);
+        const dateDisplay = parsed ? parsed.dateStr : '-';
+
+        // Desain Badge Metode Pembayaran
+        let methodBadge = `<span class="bg-slate-100 text-slate-700 font-medium px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-money-bill text-[9px] mr-1"></i>${o.method || 'Tunai / Cash'}</span>`;
+        if (o.method === 'QRIS') methodBadge = `<span class="bg-cyan-50 text-cyan-600 border border-cyan-100 font-bold px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-qrcode text-[9px] mr-1"></i>QRIS</span>`;
+        if (o.method === 'Transfer Bank') methodBadge = `<span class="bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-building-columns text-[9px] mr-1"></i>Transfer</span>`;
+
+        // Peringatan jika belum lunas
+        let statusText = o.paymentStatus === 'Belum Bayar' ? `<br><span class="text-rose-500 font-bold text-[9px] bg-rose-50 px-1.5 py-0.5 rounded mt-1 inline-block">Belum Bayar</span>` : '';
+
+        return `
+        <tr class="hover:bg-slate-50/80 transition-all">
+            <td class="p-3 whitespace-nowrap">${dateDisplay}</td>
+            <td class="p-3"><span class="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${o.id}</span></td>
+            <td class="p-3 font-medium text-slate-800 leading-tight">${o.customer} <br><span class="text-[9px] text-slate-400">${o.phone || '-'}</span></td>
+            <td class="p-3 text-[10px] text-slate-500 max-w-[120px] truncate" title="${o.service}">${o.service}</td>
+            <td class="p-3 whitespace-nowrap">${methodBadge}</td>
+            <td class="p-3 font-bold text-emerald-600 whitespace-nowrap">${formatRupiah(o.total || 0)} ${statusText}</td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function exportIncomeToExcel() {
+    if (orders.length === 0) return alert("Tidak ada data pemasukan untuk diexport.");
+    const worksheet = XLSX.utils.json_to_sheet(orders);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Pemasukan");
+    XLSX.writeFile(workbook, `Rekap_Pemasukan_${tenantName}.xlsx`);
+}
 // ==========================================================================
 // SISTEM NAVIGASI & UTILITY KONTROL INTERFACE
 // ==========================================================================
@@ -613,8 +671,8 @@ function switchTab(tabId) {
     const tabs = ['analytics', 'cashier', 'settings'];
     tabs.forEach(t => {
         const btn = document.getElementById(`btn-tab-${t}`);
-        if(btn) {
-            if(t === tabId) {
+        if (btn) {
+            if (t === tabId) {
                 btn.className = "flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold theme-color bg-cyan-50 lg:w-full transition-all";
             } else {
                 btn.className = "flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold text-slate-400 hover:bg-slate-100 lg:w-full transition-all";
@@ -630,11 +688,11 @@ function formatRupiah(num) {
 function triggerNotification(msg) {
     const banner = document.getElementById('liveAlert');
     const msgEl = document.getElementById('alertMessage');
-    if(!banner || !msgEl) return;
+    if (!banner || !msgEl) return;
 
     msgEl.innerText = msg;
     banner.classList.remove('hidden');
-    
+
     setTimeout(() => {
         banner.classList.add('hidden');
     }, 3000);
@@ -652,11 +710,11 @@ function renderEmptyStates() {
     document.getElementById('stat-profit').innerText = "Rp 0";
     document.getElementById('stat-orders').innerText = "0 Nota";
     const tbody = document.getElementById('expenses-table-body');
-    if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 italic">Silakan hubungkan cabang atau atur master database untuk menampilkan data keuangan.</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 italic">Silakan hubungkan cabang atau atur master database untuk menampilkan data keuangan.</td></tr>`;
 }
 
 function exportExpensesToExcel() {
-    if(expenses.length === 0) return alert("Tidak ada data pengeluaran untuk diexport.");
+    if (expenses.length === 0) return alert("Tidak ada data pengeluaran untuk diexport.");
     const worksheet = XLSX.utils.json_to_sheet(expenses);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Pengeluaran");
