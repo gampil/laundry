@@ -99,11 +99,14 @@ async function loadMasterDatabase() {
 async function createNewBranch() {
     const nameInput = document.getElementById('new-branch-name');
     const urlInput = document.getElementById('new-branch-url');
+    const pinInput = document.getElementById('new-branch-pin'); // 1. Tangkap elemen PIN
 
     const name = nameInput.value.trim();
     const url = urlInput.value.trim();
+    const pin = pinInput.value.trim(); // 2. Ambil nilai PIN-nya
 
-    if (!name || !url) return alert("Harap isi seluruh input form pendaftaran cabang!");
+    // 3. Pastikan PIN juga wajib diisi sebelum lanjut
+    if (!name || !url || !pin) return alert("Harap isi seluruh form pendaftaran cabang, termasuk PIN!");
 
     const branchId = 'CAB-' + Date.now();
 
@@ -112,7 +115,8 @@ async function createNewBranch() {
             action: 'addBranch',
             id: branchId,
             name: name,
-            url: url
+            url: url,
+            pin: pin // 4. Sisipkan PIN ke dalam payload data
         };
 
         const response = await fetch(MASTER_SCRIPT_URL, {
@@ -123,8 +127,10 @@ async function createNewBranch() {
 
         if (res.status === 'success') {
             triggerNotification("Cabang Baru Berhasil Didaftarkan!");
+            // 5. Kosongkan semua form setelah sukses, termasuk PIN
             nameInput.value = "";
             urlInput.value = "";
+            pinInput.value = ""; 
             loadMasterDatabase();
         } else {
             alert("Gagal mendaftarkan cabang: " + res.message);
@@ -185,7 +191,9 @@ function openEditBranchModal(id) {
     document.getElementById('edit-branch-id').value = branch.id;
     document.getElementById('edit-branch-name').value = branch.name;
     document.getElementById('edit-branch-url').value = branch.url;
+    document.getElementById('edit-branch-pin').value = branch.pin || '';
     document.getElementById('editBranchModal').classList.remove('hidden');
+
 }
 
 function closeEditBranchModal() {
@@ -196,12 +204,17 @@ async function submitEditBranch() {
     const id = document.getElementById('edit-branch-id').value;
     const name = document.getElementById('edit-branch-name').value.trim();
     const url = document.getElementById('edit-branch-url').value.trim();
+    const pin = document.getElementById('edit-branch-pin').value.trim(); // 1. Tangkap input PIN yang diedit
 
-    if (!name || !url) return alert("Data cabang tidak boleh kosong!");
+    // 2. Tambahkan validasi agar PIN juga wajib diisi saat proses edit
+    if (!name || !url || !pin) return alert("Data cabang dan PIN tidak boleh kosong!");
+    
     document.getElementById('editBranchModal').classList.add('opacity-50');
 
     try {
-        const payload = { action: 'editBranch', id: id, name: name, url: url };
+        // 3. Sisipkan pin ke dalam payload untuk dikirim ke Master Database
+        const payload = { action: 'editBranch', id: id, name: name, url: url, pin: pin };
+        
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
