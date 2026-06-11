@@ -1,47 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Forresa Owner | Dashboard Keuangan & Multi-Cabang</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        .theme-color { color: #40E0D0 !important; }
-        .theme-bg { background-color: #40E0D0 !important; }
-        .theme-border { border-color: #40E0D0 !important; }
-        .theme-bg-light { background-color: rgba(64, 224, 208, 0.08) !important; }
-        
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .theme-color {
+            color: #40e0d0 !important;
+        }
+
+        .theme-bg {
+            background-color: #40e0d0 !important;
+        }
+
+        .theme-border {
+            border-color: #40e0d0 !important;
+        }
+
+        .theme-bg-light {
+            background-color: rgba(64, 224, 208, 0.08) !important;
+        }
+
         /* Custom UI Scrollbar */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-thumb { background: #40E0D0; border-radius: 10px; }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #40e0d0;
+            border-radius: 10px;
+        }
     </style>
 </head>
-<body class="antialiased bg-slate-50 text-slate-800">
 
-    <div id="login-screen" class="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6 w-full max-w-md mx-auto relative overflow-hidden">
+<body class="antialiased bg-slate-50 text-slate-800">
+    <div id="login-screen"
+        class="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6 w-full max-w-md mx-auto relative overflow-hidden">
         <div class="absolute -top-16 -left-16 w-48 h-48 rounded-full theme-bg opacity-10 blur-xl"></div>
         <div class="absolute -bottom-20 -right-20 w-64 h-64 rounded-full theme-bg opacity-10 blur-2xl"></div>
 
         <div class="w-full bg-white p-8 rounded-3xl border border-slate-100 shadow-xl relative z-10 text-center">
-                <div class="w-55 h-30 mx-auto mb-4 flex items-center justify-center">
-                    <img src="logo/foresa.png" alt="Logo Foresa" class="w-full h-full object-contain">
-                </div>
-            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Owner Dashboard</h1>
-            <p class="text-slate-400 text-xs mt-1 mb-6">Verifikasi PIN Keamanan Owner</p>
-            
+            <div
+                class="w-16 h-16 theme-bg rounded-2xl mx-auto flex items-center justify-center text-white text-2xl shadow-lg shadow-cyan-100 mb-4">
+                <i class="fa-solid fa-user-gear"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                Owner Dashboard
+            </h1>
+            <p class="text-slate-400 text-xs mt-1 mb-6">
+                Verifikasi PIN Keamanan Owner
+            </p>
+
             <div class="space-y-4 text-left">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">PIN OWNER</label>
-                    <input type="password" id="input-owner-pin" placeholder="••••" maxlength="6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-center text-xl font-bold tracking-widest focus:outline-none focus:border-[#40E0D0] transition-all">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">PIN
+                        OWNER</label>
+                    <input type="password" id="input-owner-pin" placeholder="••••" maxlength="6"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-center text-xl font-bold tracking-widest focus:outline-none focus:border-[#40E0D0] transition-all" />
                 </div>
-                <button onclick="submitOwnerLogin()" class="w-full theme-bg text-white font-bold py-3.5 rounded-xl shadow-lg shadow-cyan-100 hover:opacity-95 active:scale-[0.99] transition-all text-sm mt-2 uppercase tracking-wider">
+                <button onclick="submitOwnerLogin()"
+                    class="w-full theme-bg text-white font-bold py-3.5 rounded-xl shadow-lg shadow-cyan-100 hover:opacity-95 active:scale-[0.99] transition-all text-sm mt-2 uppercase tracking-wider">
                     Masuk Sistem <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
             </div>
@@ -49,48 +82,65 @@
     </div>
 
     <div id="main-app" class="hidden min-h-screen flex flex-col pb-24 md:pb-6">
-        
         <header class="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 theme-bg rounded-xl flex items-center justify-center text-white shadow-md shadow-cyan-100">
+                    <div
+                        class="w-10 h-10 theme-bg rounded-xl flex items-center justify-center text-white shadow-md shadow-cyan-100">
                         <i class="fa-solid fa-chart-pie text-sm"></i>
                     </div>
                     <div>
-                        <h2 id="ui-tenant-name" class="font-extrabold text-slate-900 text-base leading-tight">Loading...</h2>
-                        <span class="text-[10px] bg-cyan-50 theme-color px-2 py-0.5 rounded-full font-bold tracking-wider uppercase border border-cyan-100 mt-0.5 inline-block">Panel Owner</span>
+                        <h2 id="ui-tenant-name" class="font-extrabold text-slate-900 text-base leading-tight">
+                            Loading...
+                        </h2>
+                        <span
+                            class="text-[10px] bg-cyan-50 theme-color px-2 py-0.5 rounded-full font-bold tracking-wider uppercase border border-cyan-100 mt-0.5 inline-block">Panel
+                            Owner</span>
                     </div>
                 </div>
-                <button onclick="logoutOwner()" class="bg-rose-50 text-rose-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-rose-100 transition-all flex items-center gap-2">
-                    <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Keluar</span>
+                <button onclick="logoutOwner()"
+                    class="bg-rose-50 text-rose-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-rose-100 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="hidden sm:inline">Keluar</span>
                 </button>
             </div>
         </header>
 
         <div class="max-w-7xl mx-auto px-4 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 flex-1">
-            
-            <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 flex justify-around items-center z-50 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:bg-transparent lg:border-none lg:p-0 lg:flex-col lg:justify-start lg:items-stretch lg:col-span-3 lg:gap-2">
-                <button onclick="switchTab('analytics')" id="btn-tab-analytics" class="flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold theme-color bg-cyan-50 lg:w-full transition-all">
-                    <i class="fa-solid fa-chart-line text-base lg:w-5"></i> Analitik & Rekap
+            <nav
+                class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 flex justify-around items-center z-50 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:bg-transparent lg:border-none lg:p-0 lg:flex-col lg:justify-start lg:items-stretch lg:col-span-3 lg:gap-2">
+                <button onclick="switchTab('analytics')" id="btn-tab-analytics"
+                    class="flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold theme-color bg-cyan-50 lg:w-full transition-all">
+                    <i class="fa-solid fa-chart-line text-base lg:w-5"></i> Analitik &
+                    Rekap
                 </button>
-                <button onclick="switchTab('cashier')" id="btn-tab-cashier" class="flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold text-slate-400 hover:bg-slate-100 lg:w-full transition-all">
-                    <i class="fa-solid fa-users-gear text-base lg:w-5"></i> Data Kasir & PIN
+                <button onclick="switchTab('cashier')" id="btn-tab-cashier"
+                    class="flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold text-slate-400 hover:bg-slate-100 lg:w-full transition-all">
+                    <i class="fa-solid fa-users-gear text-base lg:w-5"></i> Data Kasir &
+                    PIN
                 </button>
-                <button onclick="switchTab('settings')" id="btn-tab-settings" class="flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold text-slate-400 hover:bg-slate-100 lg:w-full transition-all">
-                    <i class="fa-solid fa-sliders text-base lg:w-5"></i> Konfigurasi Cabang
+                <button onclick="switchTab('settings')" id="btn-tab-settings"
+                    class="flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 px-4 py-2.5 rounded-xl text-xs lg:text-sm font-bold text-slate-400 hover:bg-slate-100 lg:w-full transition-all">
+                    <i class="fa-solid fa-sliders text-base lg:w-5"></i> Konfigurasi
+                    Cabang
                 </button>
             </nav>
 
             <main class="col-span-1 lg:col-span-9 space-y-6">
-
                 <div id="view-analytics" class="tab-content space-y-6">
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row gap-4 items-end lg:items-center justify-between">
+                    <div
+                        class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row gap-4 items-end lg:items-center justify-between">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm">Rentang Analitik Rekap</h3>
-                            <p class="text-slate-400 text-xs">Pilih jangkauan waktu kalkulasi omset bisnis</p>
+                            <h3 class="font-bold text-slate-800 text-sm">
+                                Rentang Analitik Rekap
+                            </h3>
+                            <p class="text-slate-400 text-xs">
+                                Pilih jangkauan waktu kalkulasi omset bisnis
+                            </p>
                         </div>
                         <div class="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
-                            <select id="analytics-filter-range" onchange="toggleCustomDateFilter()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#40E0D0] w-full sm:w-auto">
+                            <select id="analytics-filter-range" onchange="toggleCustomDateFilter()"
+                                class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#40E0D0] w-full sm:w-auto">
                                 <option value="hari-ini">Hari Ini</option>
                                 <option value="7-hari">7 Hari Terakhir</option>
                                 <option value="30-hari" selected>30 Hari Terakhir</option>
@@ -99,98 +149,218 @@
                             </select>
 
                             <div id="custom-date-container" class="hidden flex items-center gap-2 w-full sm:w-auto">
-                                <input type="date" id="filter-start" onchange="applyAnalyticsFilter()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#40E0D0] w-full">
+                                <input type="date" id="filter-start" onchange="applyAnalyticsFilter()"
+                                    class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#40E0D0] w-full" />
                                 <span class="text-slate-400 text-xs font-bold">-</span>
-                                <input type="date" id="filter-end" onchange="applyAnalyticsFilter()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#40E0D0] w-full">
+                                <input type="date" id="filter-end" onchange="applyAnalyticsFilter()"
+                                    class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#40E0D0] w-full" />
                             </div>
 
-                            <button onclick="fetchBranchAnalyticsData()" class="bg-slate-900 text-white p-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center shrink-0 w-full sm:w-auto">
-                                <i class="fa-solid fa-rotate mr-1 sm:mr-0"></i> <span class="sm:hidden">Refresh Data</span>
+                            <button onclick="fetchBranchAnalyticsData()"
+                                class="bg-slate-900 text-white p-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all flex items-center justify-center shrink-0 w-full sm:w-auto">
+                                <i class="fa-solid fa-rotate mr-1 sm:mr-0"></i>
+                                <span class="sm:hidden">Refresh Data</span>
                             </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div
+                            class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-slate-300"></div>
+                            <span class="text-[10px] font-bold text-slate-400 block uppercase mt-1">Tunai / Cash</span>
+                            <h4 id="stat-tunai" class="text-sm font-extrabold text-slate-800 mt-1">
+                                Rp 0
+                            </h4>
+                        </div>
+                        <div
+                            class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-cyan-400"></div>
+                            <span class="text-[10px] font-bold text-slate-400 block uppercase mt-1">QRIS</span>
+                            <h4 id="stat-qris" class="text-sm font-extrabold text-slate-800 mt-1">
+                                Rp 0
+                            </h4>
+                        </div>
+                        <div
+                            class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-400"></div>
+                            <span class="text-[10px] font-bold text-slate-400 block uppercase mt-1">Transfer Bank</span>
+                            <h4 id="stat-transfer" class="text-sm font-extrabold text-slate-800 mt-1">
+                                Rp 0
+                            </h4>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                        <div
+                            class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pemasukan Kotor</p>
-                                    <h3 id="stat-income" class="text-xl font-extrabold text-slate-900 mt-1">Rp 0</h3>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Pemasukan Kotor
+                                    </p>
+                                    <h3 id="stat-income" class="text-xl font-extrabold text-slate-900 mt-1">
+                                        Rp 0
+                                    </h3>
                                 </div>
-                                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-arrow-down-long"></i></div>
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-arrow-down-long"></i>
+                                </div>
                             </div>
-                            <span class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full"><i class="fa-solid fa-wallet mr-1"></i> Total Omset Bruto</span>
+                            <span
+                                class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full"><i
+                                    class="fa-solid fa-wallet mr-1"></i> Total Omset
+                                Bruto</span>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                        <div
+                            class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Pengeluaran</p>
-                                    <h3 id="stat-expense" class="text-xl font-extrabold text-slate-900 mt-1">Rp 0</h3>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Total Pengeluaran
+                                    </p>
+                                    <h3 id="stat-expense" class="text-xl font-extrabold text-slate-900 mt-1">
+                                        Rp 0
+                                    </h3>
                                 </div>
-                                <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs"><i class="fa-solid fa-arrow-up-long"></i></div>
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-arrow-up-long"></i>
+                                </div>
                             </div>
-                            <span class="text-[10px] text-rose-600 font-semibold bg-rose-50 px-2 py-0.5 rounded-full"><i class="fa-solid fa-receipt mr-1"></i> Biaya Operasional</span>
+                            <span class="text-[10px] text-rose-600 font-semibold bg-rose-50 px-2 py-0.5 rounded-full"><i
+                                    class="fa-solid fa-receipt mr-1"></i> Biaya
+                                Operasional</span>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-[#40E0D0] shadow-sm relative overflow-hidden ring-2 ring-cyan-500/10">
+                        <div
+                            class="bg-white p-5 rounded-2xl border border-[#40E0D0] shadow-sm relative overflow-hidden ring-2 ring-cyan-500/10">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <p class="text-xs font-bold theme-color uppercase tracking-wider">Omset Bersih (Netto)</p>
-                                    <h3 id="stat-profit" class="text-xl font-extrabold text-slate-900 mt-1">Rp 0</h3>
+                                    <p class="text-xs font-bold theme-color uppercase tracking-wider">
+                                        Omset Bersih (Netto)
+                                    </p>
+                                    <h3 id="stat-profit" class="text-xl font-extrabold text-slate-900 mt-1">
+                                        Rp 0
+                                    </h3>
                                 </div>
-                                <div class="w-8 h-8 rounded-xl theme-bg text-white flex items-center justify-center text-xs"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                                <div
+                                    class="w-8 h-8 rounded-xl theme-bg text-white flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-money-bill-trend-up"></i>
+                                </div>
                             </div>
-                            <span id="profit-indicator" class="text-[10px] theme-color font-semibold bg-cyan-50 px-2 py-0.5 rounded-full">Laba Bersih </span>
+                            <span id="profit-indicator"
+                                class="text-[10px] theme-color font-semibold bg-cyan-50 px-2 py-0.5 rounded-full">Laba
+                                Bersih Toko</span>
                         </div>
                     </div>
 
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div
+                        class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                            </div>
                             <div>
-                                <h4 class="font-bold text-slate-800 text-sm">Volume Penjualan</h4>
-                                <p class="text-slate-400 text-xs">Total lembar nota pesanan yang diproses</p>
+                                <h4 class="font-bold text-slate-800 text-sm">
+                                    Volume Penjualan
+                                </h4>
+                                <p class="text-slate-400 text-xs">
+                                    Total lembar nota pesanan yang diproses
+                                </p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <h3 id="stat-orders" class="text-lg font-extrabold text-slate-900">0 Nota</h3>
+                            <h3 id="stat-orders" class="text-lg font-extrabold text-slate-900">
+                                0 Nota
+                            </h3>
                         </div>
                     </div>
 
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm">Grafik Trend Keuangan</h3>
-                            <p class="text-slate-400 text-xs">Visualisasi perbandingan omset kotor vs biaya operasional</p>
+                            <h3 class="font-bold text-slate-800 text-sm">
+                                Grafik Trend Keuangan
+                            </h3>
+                            <p class="text-slate-400 text-xs">
+                                Visualisasi perbandingan omset kotor vs biaya operasional
+                            </p>
                         </div>
                         <div class="relative min-h-[250px] w-full">
                             <canvas id="chart-cashflow"></canvas>
                         </div>
                     </div>
-
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden space-y-3 p-4">
                         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-sm">Log Alokasi Pengeluaran</h3>
-                                <p class="text-slate-400 text-xs">Rincian pengeluaran dana operasional pada cabang</p>
+                                <h3 class="font-bold text-slate-800 text-sm">
+                                    Log Pemasukan & Nota
+                                </h3>
+                                <p class="text-slate-400 text-xs">
+                                    Rincian transaksi yang masuk ke cabang
+                                </p>
                             </div>
-                            <button onclick="exportExpensesToExcel()" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-file-excel"></i> Export Excel
+                            <button onclick="exportIncomeToExcel()"
+                                class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> Export Pemasukan
                             </button>
                         </div>
-                        <div class="overflow-x-auto w-full">
+                        <div class="overflow-x-auto overflow-y-auto max-h-[400px] w-full relative">
                             <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-50 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100">
-                                        <th class="p-3">Tanggal</th>
-                                        <th class="p-3">Kategori</th>
-                                        <th class="p-3">Item Kebutuhan</th>
-                                        <th class="p-3">Nominal</th>
-                                        <th class="p-3">Sumber Dana</th>
-                                        <th class="p-3">PIC</th>
+                                <thead class="sticky top-0 z-20 shadow-sm">
+                                    <tr
+                                        class="bg-slate-50 text-slate-400 font-bold uppercase tracking-wider outline outline-1 outline-slate-100">
+                                        <th class="p-3 bg-slate-50">Tanggal</th>
+                                        <th class="p-3 bg-slate-50">No Nota</th>
+                                        <th class="p-3 bg-slate-50">Pelanggan</th>
+                                        <th class="p-3 bg-slate-50">Paket Layanan</th>
+                                        <th class="p-3 bg-slate-50">Metode</th>
+                                        <th class="p-3 bg-slate-50">Total Tagihan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="income-table-body" class="divide-y divide-slate-50 text-slate-600">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-6 text-slate-400 italic">
+                                            Silakan pilih/muat cabang terlebih dahulu.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden space-y-3 p-4">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">
+                                    Log Alokasi Pengeluaran
+                                </h3>
+                                <p class="text-slate-400 text-xs">
+                                    Rincian pengeluaran dana operasional pada cabang
+                                </p>
+                            </div>
+                            <button onclick="exportExpensesToExcel()"
+                                class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-file-excel"></i> Export Pengeluaran
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto overflow-y-auto max-h-[400px] w-full relative">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="sticky top-0 z-20 shadow-sm">
+                                    <tr
+                                        class="bg-slate-50 text-slate-400 font-bold uppercase tracking-wider outline outline-1 outline-slate-100">
+                                        <th class="p-3 bg-slate-50">Tanggal</th>
+                                        <th class="p-3 bg-slate-50">Kategori</th>
+                                        <th class="p-3 bg-slate-50">Item Kebutuhan</th>
+                                        <th class="p-3 bg-slate-50">Nominal</th>
+                                        <th class="p-3 bg-slate-50">Sumber Dana</th>
+                                        <th class="p-3 bg-slate-50">PIC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="expenses-table-body" class="divide-y divide-slate-50 text-slate-600">
                                     <tr>
-                                        <td colspan="6" class="text-center py-6 text-slate-400 italic">Silakan pilih/muat cabang terlebih dahulu.</td>
+                                        <td colspan="6" class="text-center py-6 text-slate-400 italic">
+                                            Silakan pilih/muat cabang terlebih dahulu.
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -202,134 +372,206 @@
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-sm">Manajemen Akun Kasir</h3>
-                                <p class="text-slate-400 text-xs">Otorisasi hak akses kasir untuk mengunci login aplikasi kasir cabang</p>
+                                <h3 class="font-bold text-slate-800 text-sm">
+                                    Manajemen Akun Kasir
+                                </h3>
+                                <p class="text-slate-400 text-xs">
+                                    Otorisasi hak akses kasir untuk mengunci login aplikasi
+                                    kasir cabang
+                                </p>
                             </div>
-                            <button onclick="openCashierModal()" class="theme-bg text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-100">
+                            <button onclick="openCashierModal()"
+                                class="theme-bg text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-100">
                                 <i class="fa-solid fa-user-plus"></i> Tambah Kasir Baru
                             </button>
                         </div>
 
-                        <div id="cashier-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            </div>
+                        <div id="cashier-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
 
                 <div id="view-settings" class="tab-content hidden space-y-6">
-                    
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="fa-solid fa-circle-plus theme-color"></i> Pendaftaran Cabang Baru</h3>
-                            <p class="text-slate-400 text-xs">Masukkan identitas cabang operasional baru Anda untuk didistribusikan ke halaman kasir.</p>
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-circle-plus theme-color"></i>
+                                Pendaftaran Cabang Baru
+                            </h3>
+                            <p class="text-slate-400 text-xs">
+                                Masukkan identitas cabang operasional baru Anda untuk
+                                didistribusikan ke halaman kasir.
+                            </p>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nama Cabang / Tenant</label>
-                                <input type="text" id="new-branch-name" placeholder="Contoh: Forresa Cabang Malang" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-[#40E0D0]">
+                                <label
+                                    class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nama
+                                    Cabang / Tenant</label>
+                                <input type="text" id="new-branch-name" placeholder="Contoh: Forresa Cabang Malang"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-[#40E0D0]" />
                             </div>
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Link Database</label>
-                                <input type="text" id="new-branch-url" placeholder="https://script.google.com/macros/s/..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-[#40E0D0]">
-                                <p class="text-slate-400 text-xs">Note : Jika ingin tambah cabang baru silahkan hubungi developer <a href="https://api.whatsapp.com/send?phone=6285659679645">Gampil Media</a></p>
+                                <label
+                                    class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Google
+                                    Sheet Script URL</label>
+                                <input type="text" id="new-branch-url"
+                                    placeholder="https://script.google.com/macros/s/..."
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-[#40E0D0]" />
                             </div>
                         </div>
-                        <button onclick="createNewBranch()" class="theme-bg text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-md shadow-cyan-100 w-full sm:w-auto">
+                        <button onclick="createNewBranch()"
+                            class="theme-bg text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-md shadow-cyan-100 w-full sm:w-auto">
                             Daftarkan Cabang Baru
                         </button>
                     </div>
 
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm">Daftar Cabang Aktif</h3>
-                            <p class="text-slate-400 text-xs">Klik salah satu kartu cabang di bawah untuk beralih dan memuat analitik rekap laporan keuangan.</p>
+                            <h3 class="font-bold text-slate-800 text-sm">
+                                Daftar Cabang Aktif
+                            </h3>
+                            <p class="text-slate-400 text-xs">
+                                Klik salah satu kartu cabang di bawah untuk beralih dan memuat
+                                analitik rekap laporan keuangan.
+                            </p>
                         </div>
-                        <div id="branch-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            </div>
+                        <div id="branch-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
-
             </main>
         </div>
     </div>
 
-    <div id="cashierModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
+    <div id="cashierModal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
         <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex justify-between items-center">
-                <h3 class="font-extrabold text-slate-900 text-base">Registrasi Akun Kasir</h3>
-                <button onclick="closeCashierModal()" class="w-7 h-7 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100"><i class="fa-solid fa-xmark text-xs"></i></button>
+                <h3 class="font-extrabold text-slate-900 text-base">
+                    Registrasi Akun Kasir
+                </h3>
+                <button onclick="closeCashierModal()"
+                    class="w-7 h-7 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
             </div>
             <div class="space-y-3">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Lengkap Kasir</label>
-                    <input type="text" id="modal-cashier-name" placeholder="Masukkan nama kasir" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Lengkap
+                        Kasir</label>
+                    <input type="text" id="modal-cashier-name" placeholder="Masukkan nama kasir"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]" />
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PIN Keamanan (4-6 Digit)</label>
-                    <input type="password" id="modal-cashier-pin" placeholder="••••" maxlength="6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold text-center tracking-widest focus:outline-none focus:border-[#40E0D0]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PIN Keamanan
+                        (4-6 Digit)</label>
+                    <input type="password" id="modal-cashier-pin" placeholder="••••" maxlength="6"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold text-center tracking-widest focus:outline-none focus:border-[#40E0D0]" />
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-2">
-                <button onclick="closeCashierModal()" class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-xs hover:bg-slate-200">Batal</button>
-                <button onclick="saveNewCashier()" class="w-full theme-bg text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-cyan-200 hover:opacity-95">Simpan Kasir</button>
+                <button onclick="closeCashierModal()"
+                    class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-xs hover:bg-slate-200">
+                    Batal
+                </button>
+                <button onclick="saveNewCashier()"
+                    class="w-full theme-bg text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-cyan-200 hover:opacity-95">
+                    Simpan Kasir
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="editCashierModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
+    <div id="editCashierModal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
         <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex justify-between items-center">
-                <h3 class="font-extrabold text-slate-900 text-base">Edit Akun Kasir</h3>
-                <button onclick="closeEditCashierModal()" class="w-7 h-7 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100"><i class="fa-solid fa-xmark text-xs"></i></button>
+                <h3 class="font-extrabold text-slate-900 text-base">
+                    Edit Akun Kasir
+                </h3>
+                <button onclick="closeEditCashierModal()"
+                    class="w-7 h-7 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
             </div>
             <div class="space-y-3">
-                <input type="hidden" id="edit-cashier-id">
+                <input type="hidden" id="edit-cashier-id" />
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Lengkap Kasir</label>
-                    <input type="text" id="edit-cashier-name" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Lengkap
+                        Kasir</label>
+                    <input type="text" id="edit-cashier-name"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]" />
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PIN Keamanan Baru</label>
-                    <input type="text" id="edit-cashier-pin" maxlength="6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold text-center tracking-widest focus:outline-none focus:border-[#40E0D0]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PIN Keamanan
+                        Baru</label>
+                    <input type="text" id="edit-cashier-pin" maxlength="6"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold text-center tracking-widest focus:outline-none focus:border-[#40E0D0]" />
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-2">
-                <button onclick="closeEditCashierModal()" class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-xs hover:bg-slate-200">Batal</button>
-                <button onclick="submitEditCashier()" class="w-full theme-bg text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-cyan-200 hover:opacity-90">Simpan Perubahan</button>
+                <button onclick="closeEditCashierModal()"
+                    class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-xs hover:bg-slate-200">
+                    Batal
+                </button>
+                <button onclick="submitEditCashier()"
+                    class="w-full theme-bg text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-cyan-200 hover:opacity-90">
+                    Simpan Perubahan
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="liveAlert" class="hidden fixed top-6 right-6 w-full max-w-xs bg-slate-900/95 text-white p-4 rounded-2xl shadow-xl z-50 flex items-center gap-3 border border-slate-800 transition-all">
-        <div class="w-8 h-8 rounded-xl theme-bg text-white flex items-center justify-center text-xs"><i class="fa-solid fa-bell"></i></div>
+    <div id="liveAlert"
+        class="hidden fixed top-6 right-6 w-full max-w-xs bg-slate-900/95 text-white p-4 rounded-2xl shadow-xl z-50 flex items-center gap-3 border border-slate-800 transition-all">
+        <div class="w-8 h-8 rounded-xl theme-bg text-white flex items-center justify-center text-xs">
+            <i class="fa-solid fa-bell"></i>
+        </div>
         <div class="flex-1 text-left">
             <p id="alertMessage" class="text-xs font-medium text-slate-200"></p>
         </div>
     </div>
 
-<div id="editBranchModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
+    <div id="editBranchModal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
         <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex justify-between items-center">
-                <h3 class="font-extrabold text-slate-900 text-base">Edit Data Cabang</h3>
-                <button onclick="closeEditBranchModal()" class="w-7 h-7 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100"><i class="fa-solid fa-xmark text-xs"></i></button>
+                <h3 class="font-extrabold text-slate-900 text-base">
+                    Edit Data Cabang
+                </h3>
+                <button onclick="closeEditBranchModal()"
+                    class="w-7 h-7 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
             </div>
             <div class="space-y-3">
-                <input type="hidden" id="edit-branch-id">
+                <input type="hidden" id="edit-branch-id" />
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Cabang / Tenant</label>
-                    <input type="text" id="edit-branch-name" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nama Cabang
+                        / Tenant</label>
+                    <input type="text" id="edit-branch-name"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]" />
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Google Sheet Script URL</label>
-                    <input type="text" id="edit-branch-url" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Google Sheet
+                        Script URL</label>
+                    <input type="text" id="edit-branch-url"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0]" />
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-2">
-                <button onclick="closeEditBranchModal()" class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-xs hover:bg-slate-200">Batal</button>
-                <button onclick="submitEditBranch()" class="w-full theme-bg text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-cyan-200 hover:opacity-90">Simpan Perubahan</button>
+                <button onclick="closeEditBranchModal()"
+                    class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-xs hover:bg-slate-200">
+                    Batal
+                </button>
+                <button onclick="submitEditBranch()"
+                    class="w-full theme-bg text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-cyan-200 hover:opacity-90">
+                    Simpan Perubahan
+                </button>
             </div>
         </div>
     </div>
 
     <script src="owner.js"></script>
 </body>
+
 </html>
