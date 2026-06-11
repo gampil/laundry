@@ -14,7 +14,8 @@ let expenses = [];
 let branches = [];
 let cashiers = [];
 let cashflowChartInstance = null;
-
+let currentFilteredOrders = [];
+let currentFilteredExpenses = [];
 window.addEventListener('DOMContentLoaded', () => {
     // Validasi Sesi Login Owner
     const isOwnerLoggedIn = localStorage.getItem('owner_logged_in');
@@ -518,7 +519,8 @@ function applyAnalyticsFilter() {
     const tTunai = validOrders.filter(o => o.method === 'Tunai / Cash').reduce((sum, o) => sum + Number(o.total || 0), 0);
     const tQris = validOrders.filter(o => o.method === 'QRIS').reduce((sum, o) => sum + Number(o.total || 0), 0);
     const tTransfer = validOrders.filter(o => o.method === 'Transfer Bank').reduce((sum, o) => sum + Number(o.total || 0), 0);
-
+    currentFilteredOrders = filteredOrders;
+    currentFilteredExpenses = filteredExpenses;
     // UPDATE UI KOTAK
     document.getElementById('stat-income').innerText = formatRupiah(grossIncome);
     document.getElementById('stat-expense').innerText = formatRupiah(totalExpense);
@@ -655,11 +657,15 @@ function renderIncomeTable(filteredOrders) {
 }
 
 function exportIncomeToExcel() {
-    if (orders.length === 0) return alert("Tidak ada data pemasukan untuk diexport.");
-    const worksheet = XLSX.utils.json_to_sheet(orders);
+    if (currentFilteredOrders.length === 0) return alert("Tidak ada data pemasukan untuk diexport pada periode ini.");
+
+    // Urutkan data Excel dari yang terbaru juga agar rapi
+    const sortedDataForExcel = [...currentFilteredOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const worksheet = XLSX.utils.json_to_sheet(sortedDataForExcel);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Pemasukan");
-    XLSX.writeFile(workbook, `Rekap_Pemasukan_${tenantName}.xlsx`);
+    XLSX.writeFile(workbook, `Rekap_Pemasukan_${tenantName}_Filter.xlsx`);
 }
 // ==========================================================================
 // SISTEM NAVIGASI & UTILITY KONTROL INTERFACE
@@ -714,9 +720,62 @@ function renderEmptyStates() {
 }
 
 function exportExpensesToExcel() {
-    if (expenses.length === 0) return alert("Tidak ada data pengeluaran untuk diexport.");
-    const worksheet = XLSX.utils.json_to_sheet(expenses);
+    if (currentFilteredExpenses.length === 0) return alert("Tidak ada data pengeluaran untuk diexport pada periode ini.");
+
+    const worksheet = XLSX.utils.json_to_sheet(currentFilteredExpenses);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Pengeluaran");
-    XLSX.writeFile(workbook, `Rekap_Pengeluaran_${tenantName}.xlsx`);
+    XLSX.writeFile(workbook, `Rekap_Pengeluaran_${tenantName}_Filter.xlsx`);
+}
+
+// ==========================================================================
+// FITUR PENCARIAN (LIVE SEARCH) PADA TABEL
+// ==========================================================================
+
+function handleIncomeSearch() {
+    // Ambil kata kunci yang diketik, ubah ke huruf kecil semua
+    const query = document.getElementById('search-income').value.toLowerCase();
+
+    // Jika kolom pencarian kosong, kembalikan ke data asli (hasil filter rentang waktu)
+    if (!query) {
+        renderIncomeTable(currentFilteredOrders);
+        return;
+    }
+
+    // Lakukan penyaringan data
+    const searchedData = currentFilteredOrders.filter(o => {
+        const id = (o.id || '').toLowerCase();
+        const customer = (o.customer || '').toLowerCase();
+        const service = (o.service || '').toLowerCase();
+
+        // Cari apakah ada kecocokan di ID Nota, Nama Pelanggan, atau Nama Paket
+        return id.includes(query) || customer.includes(query) || service.includes(query);
+    });
+
+    // Tampilkan data hasil pencarian
+    renderIncomeTable(searchedData);
+}
+
+function handleExpenseSearch() {
+    // Ambil kata kunci yang diketik, ubah ke huruf kecil semua
+    const query = document.getElementById('search-expense').value.toLowerCase();
+
+    // Jika kolom pencarian kosong, kembalikan ke data asli
+    if (!query) {
+        renderExpensesTable(currentFilteredExpenses);
+        return;
+    }
+
+    // Lakukan penyaringan data
+    const searchedData = currentFilteredExpenses.filter(e => {
+        const ket = (e.keterangan || e.keperluan || e.item || '').toLowerCase();
+        const pic = (e.pic || '').toLowerCase();
+        const kat = (e.kategori || '').toLowerCase();
+
+        // Cari apakah ada kecocokan di Keterangan, Nama PIC, atau Kategori
+        return ket.includes(query) || pic.includes(query) || kat.includes(query);
+    });
+
+    // Tampilkan data hasil pencarian
+    renderExpensesTable(searchedData);
 }
