@@ -291,19 +291,25 @@
                         </div>
                     </div>
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden space-y-3 p-4">
-                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-sm">
-                                    Log Pemasukan & Nota
-                                </h3>
-                                <p class="text-slate-400 text-xs">
-                                    Rincian transaksi yang masuk ke cabang
-                                </p>
+                                <h3 class="font-bold text-slate-800 text-sm">Log Pemasukan & Nota</h3>
+                                <p class="text-slate-400 text-xs">Rincian transaksi yang masuk ke cabang</p>
                             </div>
-                            <button onclick="exportIncomeToExcel()"
-                                class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-file-excel"></i> Export Pemasukan
-                            </button>
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <div class="relative w-full sm:w-64">
+                                    <i
+                                        class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    <input type="text" id="search-income" oninput="handleIncomeSearch()"
+                                        placeholder="Cari Nota, Nama, atau Layanan..."
+                                        class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#40E0D0] transition-all">
+                                </div>
+                                <button onclick="exportIncomeToExcel()"
+                                    class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 shrink-0"
+                                    title="Export Excel">
+                                    <i class="fa-solid fa-file-excel"></i> <span class="hidden md:inline">Export</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="overflow-x-auto overflow-y-auto max-h-[400px] w-full relative">
                             <table class="w-full text-left border-collapse text-xs">
@@ -329,19 +335,25 @@
                         </div>
                     </div>
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden space-y-3 p-4">
-                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                             <div>
-                                <h3 class="font-bold text-slate-800 text-sm">
-                                    Log Alokasi Pengeluaran
-                                </h3>
-                                <p class="text-slate-400 text-xs">
-                                    Rincian pengeluaran dana operasional pada cabang
-                                </p>
+                                <h3 class="font-bold text-slate-800 text-sm">Log Alokasi Pengeluaran</h3>
+                                <p class="text-slate-400 text-xs">Rincian pengeluaran dana operasional pada cabang</p>
                             </div>
-                            <button onclick="exportExpensesToExcel()"
-                                class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-file-excel"></i> Export Pengeluaran
-                            </button>
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <div class="relative w-full sm:w-64">
+                                    <i
+                                        class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    <input type="text" id="search-expense" oninput="handleExpenseSearch()"
+                                        placeholder="Cari Keterangan pengeluaran"
+                                        class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#40E0D0] transition-all">
+                                </div>
+                                <button onclick="exportExpensesToExcel()"
+                                    class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 shrink-0"
+                                    title="Export Excel">
+                                    <i class="fa-solid fa-file-excel"></i> <span class="hidden md:inline">Export</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="overflow-x-auto overflow-y-auto max-h-[400px] w-full relative">
                             <table class="w-full text-left border-collapse text-xs">
