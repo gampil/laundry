@@ -3,7 +3,7 @@
 // ==========================================================================
 
 // ✅ MASUKKAN LINK GOOGLE SCRIPT MASTER ANDA DI SINI
-const MASTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXyzTBYU0kq_UH-CV4iJZNSeZkIOHgk0lLJB8bid003X0ghnZ_nrVIoAFe0JQClp0/exec";
+const MASTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwidT5jhAd4vtRpOiqRf0C5yc8quxuzTioutoYdF9d2NufVCbtS0moyvH6GCrhOxkgx/exec";
 
 let SCRIPT_URL = localStorage.getItem('tenant_script_url') || "";
 let tenantName = localStorage.getItem('tenant_name') || "Pilih Cabang Terlebih Dahulu";
@@ -17,7 +17,7 @@ let cashflowChartInstance = null;
 let currentFilteredOrders = [];
 let currentFilteredExpenses = [];
 window.addEventListener('DOMContentLoaded', () => {
-    // Validasi Sesi Login Owner
+      // Validasi Sesi Login Owner
     const isOwnerLoggedIn = localStorage.getItem('owner_logged_in');
     if (isOwnerLoggedIn === "true") {
         showMainApp();
@@ -41,14 +41,33 @@ function showMainApp() {
     loadMasterDatabase();
 }
 
-function submitOwnerLogin() {
+async function submitOwnerLogin() {
     const pin = document.getElementById('input-owner-pin').value;
-    if (pin === "1234") {
-        localStorage.setItem('owner_logged_in', "true");
-        triggerNotification("Autentikasi Owner Berhasil!");
-        showMainApp();
-    } else {
-        alert("Kode Keamanan PIN Owner Salah!");
+    const btn = document.querySelector('button[onclick="submitOwnerLogin()"]');
+    
+    // Munculkan efek loading saat mengecek PIN
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
+    btn.disabled = true;
+
+    try {
+        // Cek PIN ke Database Master
+        const response = await fetch(`${MASTER_SCRIPT_URL}?action=getOwnerPin`);
+        const result = await response.json();
+        const validPin = result.pin || "1234"; // Default 1234 jika belum pernah diubah
+
+        if (pin === validPin) {
+            localStorage.setItem('owner_logged_in', "true");
+            if(typeof triggerNotification === "function") triggerNotification("Autentikasi Owner Berhasil!");
+            showMainApp();
+        } else {
+            alert("Kode Keamanan PIN Owner Salah!");
+        }
+    } catch(e) {
+        alert("Gagal terhubung ke Database Master. Pastikan koneksi internet stabil.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 }
 
@@ -481,6 +500,7 @@ function applyAnalyticsFilter() {
     let filteredOrders = [];
     let filteredExpenses = [];
 
+    // Logika Filter Rentang Waktu (Tetap sama seperti aslinya)
     if (range === 'custom') {
         const startVal = document.getElementById('filter-start').value;
         const endVal = document.getElementById('filter-end').value;
@@ -522,35 +542,58 @@ function applyAnalyticsFilter() {
         });
     }
 
-    // HITUNG TOTAL
-    const validOrders = filteredOrders.filter(o => o.paymentStatus !== "Belum Bayar" && o.status !== "Dibatalkan");
-    const grossIncome = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-    const totalExpense = filteredExpenses.reduce((sum, e) => sum + Number(e.nominal || 0), 0);
-    const netProfit = grossIncome - totalExpense;
+    // ==============================================================
+    // PERHITUNGAN BARU: LUNAS, PIUTANG, DAN ANTI-SELISIH
+    // ==============================================================
+    
+    // Pisahkan nota yang tidak dibatalkan
+    const validOrders = filteredOrders.filter(o => o.status !== "Dibatalkan");
+    
+    // Pisahkan Lunas dan Piutang
+    const lunasOrders = validOrders.filter(o => o.paymentStatus !== "Belum Bayar");
+    const piutangOrders = validOrders.filter(o => o.paymentStatus === "Belum Bayar");
 
-    // HITUNG METODE PEMBAYARAN
-    const tTunai = validOrders.filter(o => o.method === 'Tunai / Cash').reduce((sum, o) => sum + Number(o.total || 0), 0);
-    const tQris = validOrders.filter(o => o.method === 'QRIS').reduce((sum, o) => sum + Number(o.total || 0), 0);
-    const tTransfer = validOrders.filter(o => o.method === 'Transfer Bank').reduce((sum, o) => sum + Number(o.total || 0), 0);
+    // Total Omset Kotor Keseluruhan
+    const grossIncome = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    // Uang Lunas & Belum Lunas
+    const tLunas = lunasOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const tBelumLunas = piutangOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    // Pengeluaran
+    const totalExpense = filteredExpenses.reduce((sum, e) => sum + Number(e.nominal || 0), 0);
+    
+    // Laba Bersih diambil HANYA dari UANG LUNAS dikurangi PENGELUARAN
+    const netProfit = tLunas - totalExpense;
+
+    // HITUNG METODE PEMBAYARAN (ANTI-SELISIH HANYA DARI YANG LUNAS)
+    const tQris = lunasOrders.filter(o => o.method === 'QRIS').reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const tTransfer = lunasOrders.filter(o => o.method === 'Transfer Bank').reduce((sum, o) => sum + Number(o.total || 0), 0);
+    // Selain QRIS dan Transfer dianggap Tunai
+    const tTunai = lunasOrders.filter(o => o.method !== 'QRIS' && o.method !== 'Transfer Bank').reduce((sum, o) => sum + Number(o.total || 0), 0);
+
     currentFilteredOrders = filteredOrders;
     currentFilteredExpenses = filteredExpenses;
+
     // UPDATE UI KOTAK
-    document.getElementById('stat-income').innerText = formatRupiah(grossIncome);
-    document.getElementById('stat-expense').innerText = formatRupiah(totalExpense);
-    document.getElementById('stat-profit').innerText = formatRupiah(netProfit);
-    document.getElementById('stat-orders').innerText = `${filteredOrders.length} Nota`;
+    if (document.getElementById('stat-income')) document.getElementById('stat-income').innerText = formatRupiah(grossIncome);
+    if (document.getElementById('stat-expense')) document.getElementById('stat-expense').innerText = formatRupiah(totalExpense);
+    if (document.getElementById('stat-profit')) document.getElementById('stat-profit').innerText = formatRupiah(netProfit);
+    if (document.getElementById('stat-orders')) document.getElementById('stat-orders').innerText = `${filteredOrders.length} Nota`;
 
     if (document.getElementById('stat-tunai')) document.getElementById('stat-tunai').innerText = formatRupiah(tTunai);
     if (document.getElementById('stat-qris')) document.getElementById('stat-qris').innerText = formatRupiah(tQris);
     if (document.getElementById('stat-transfer')) document.getElementById('stat-transfer').innerText = formatRupiah(tTransfer);
+    if (document.getElementById('stat-lunas')) document.getElementById('stat-lunas').innerText = formatRupiah(tLunas);
+    if (document.getElementById('stat-belum-lunas')) document.getElementById('stat-belum-lunas').innerText = formatRupiah(tBelumLunas);
 
     const profitIndicator = document.getElementById('profit-indicator');
-    if (netProfit >= 0) {
-        profitIndicator.className = "text-[10px] theme-color font-semibold bg-cyan-50 px-2 py-0.5 rounded-full";
-        profitIndicator.innerText = "Laba Bersih Toko (Surplus)";
-    } else {
-        profitIndicator.className = "text-[10px] text-rose-600 font-semibold bg-rose-50 px-2 py-0.5 rounded-full";
-        profitIndicator.innerText = "Defisit Keuangan (Minus)";
+    if (profitIndicator) {
+        if (netProfit >= 0) {
+            profitIndicator.className = "text-[10px] theme-color font-semibold bg-cyan-50 px-2 py-0.5 rounded-full";
+            profitIndicator.innerText = "Laba Bersih Toko (Surplus)";
+        } else {
+            profitIndicator.className = "text-[10px] text-rose-600 font-semibold bg-rose-50 px-2 py-0.5 rounded-full";
+            profitIndicator.innerText = "Defisit Keuangan (Minus)";
+        }
     }
 
     // RENDER TABEL
@@ -558,6 +601,7 @@ function applyAnalyticsFilter() {
     renderExpensesTable(filteredExpenses);
     generateCashflowChart(filteredOrders, filteredExpenses);
 }
+
 
 function generateCashflowChart(filteredOrders, filteredExpenses) {
     const ctx = document.getElementById('chart-cashflow');
@@ -567,25 +611,43 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
 
     const dateMap = {};
 
+    // 1. Petakan Pemasukan Lunas dan Piutang (Belum Bayar)
     filteredOrders.forEach(o => {
         const parsed = parseDateString(o.date);
         if (!parsed) return;
-        if (!dateMap[parsed.dateStr]) dateMap[parsed.dateStr] = { income: 0, expense: 0 };
-        if (o.paymentStatus !== "Belum Bayar" && o.status !== "Dibatalkan") {
-            dateMap[parsed.dateStr].income += Number(o.total || 0);
+        
+        if (!dateMap[parsed.dateStr]) {
+            dateMap[parsed.dateStr] = { income: 0, expense: 0, piutang: 0 };
+        }
+        
+        if (o.status !== "Dibatalkan") {
+            if (o.paymentStatus === "Belum Bayar") {
+                // Masukkan ke keranjang Piutang (Kuning)
+                dateMap[parsed.dateStr].piutang += Number(o.total || 0);
+            } else {
+                // Masukkan ke keranjang Pemasukan Lunas (Cyan)
+                dateMap[parsed.dateStr].income += Number(o.total || 0);
+            }
         }
     });
 
+    // 2. Petakan Pengeluaran
     filteredExpenses.forEach(e => {
         const parsed = parseDateString(e.tanggal || e.date);
         if (!parsed) return;
-        if (!dateMap[parsed.dateStr]) dateMap[parsed.dateStr] = { income: 0, expense: 0 };
+        
+        if (!dateMap[parsed.dateStr]) {
+            dateMap[parsed.dateStr] = { income: 0, expense: 0, piutang: 0 };
+        }
         dateMap[parsed.dateStr].expense += Number(e.nominal || 0);
     });
 
     const sortedDates = Object.keys(dateMap).sort();
     const formattedLabels = sortedDates.map(d => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+    
+    // 3. Siapkan Data untuk Grafik
     const incomeData = sortedDates.map(d => dateMap[d].income);
+    const piutangData = sortedDates.map(d => dateMap[d].piutang);
     const expenseData = sortedDates.map(d => dateMap[d].expense);
 
     cashflowChartInstance = new Chart(ctx, {
@@ -593,18 +655,21 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
         data: {
             labels: formattedLabels,
             datasets: [
-                { label: 'Pemasukan (Rp)', data: incomeData, backgroundColor: '#40E0D0', borderRadius: 4, barPercentage: 0.7 },
-                { label: 'Pengeluaran (Rp)', data: expenseData, backgroundColor: '#f43f5e', borderRadius: 4, barPercentage: 0.7 }
+                { label: 'Lunas (Rp)', data: incomeData, backgroundColor: '#40E0D0', borderRadius: 4, barPercentage: 0.6 },
+                // TAMBAHAN: Bar Kuning untuk Piutang
+                { label: 'Belum Bayar (Rp)', data: piutangData, backgroundColor: '#fbbf24', borderRadius: 4, barPercentage: 0.6 },
+                { label: 'Keluar (Rp)', data: expenseData, backgroundColor: '#f43f5e', borderRadius: 4, barPercentage: 0.6 }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11 } } } },
+            plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11, usePointStyle: true, boxWidth: 8 } } } },
             scales: { y: { grid: { borderDash: [4, 4], color: '#f1f5f9' }, ticks: { font: { size: 10 } } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
         }
     });
 }
+
 
 function renderExpensesTable(filteredExpenses) {
     const tbody = document.getElementById('expenses-table-body');
@@ -791,4 +856,216 @@ function handleExpenseSearch() {
 
     // Tampilkan data hasil pencarian
     renderExpensesTable(searchedData);
+}
+
+// ====================================================================
+// FITUR BACKUP & KOSONGKAN DATA (SETTINGS)
+// ====================================================================
+
+function openBackupModal() {
+    if (!SCRIPT_URL) return alert("Pilih database cabang terlebih dahulu sebelum melakukan backup!");
+    document.getElementById('backupModal').classList.remove('hidden');
+}
+
+function closeBackupModal() {
+    document.getElementById('backupModal').classList.add('hidden');
+}
+
+function toggleBackupInputs() {
+    const mode = document.getElementById('backup-filter-mode').value;
+    document.getElementById('backup-wrap-date').classList.add('hidden');
+    document.getElementById('backup-wrap-month').classList.add('hidden');
+    
+    if (mode === 'date') document.getElementById('backup-wrap-date').classList.remove('hidden');
+    if (mode === 'month') document.getElementById('backup-wrap-month').classList.remove('hidden');
+}
+
+function processBackup() {
+    const mode = document.getElementById('backup-filter-mode').value;
+    let filterOrders = [...orders];
+    let filterExpenses = [...expenses];
+    
+    // Default nama waktu jika user memilih "Semua Waktu"
+    let timeLabel = "Full_Backup"; 
+
+    // Helper untuk mengubah tanggal
+    const parseDateString = (dateStr) => {
+        if (!dateStr) return null;
+        try {
+            const dt = new Date(dateStr);
+            if (isNaN(dt.getTime())) return null; 
+            const yr = dt.getFullYear();
+            const mo = String(dt.getMonth() + 1).padStart(2, '0');
+            const dy = String(dt.getDate()).padStart(2, '0');
+            return { dateStr: `${yr}-${mo}-${dy}`, monthStr: `${yr}-${mo}` };
+        } catch (e) { return null; }
+    };
+
+    // Jika user memilih filter Tanggal Spesifik
+    if (mode === 'date') {
+        const picker = document.getElementById('backup-input-date').value;
+        if (!picker) return alert("Pilih tanggal terlebih dahulu!");
+        
+        // Ubah format menjadi "Tanggal_13-06-2026"
+        const d = new Date(picker);
+        const tgl = String(d.getDate()).padStart(2, '0');
+        const bln = String(d.getMonth() + 1).padStart(2, '0');
+        const thn = d.getFullYear();
+        timeLabel = `Tanggal_${tgl}-${bln}-${thn}`;
+
+        filterOrders = orders.filter(o => { const p = parseDateString(o.date); return p && p.dateStr === picker; });
+        filterExpenses = expenses.filter(e => { const p = parseDateString(e.tanggal || e.date); return p && p.dateStr === picker; });
+        
+    } 
+    // Jika user memilih filter Bulan & Tahun
+    else if (mode === 'month') {
+        const picker = document.getElementById('backup-input-month').value;
+        if (!picker) return alert("Pilih bulan terlebih dahulu!");
+        
+        // Ubah format menjadi "Bulan_Juni_2026"
+        const d = new Date(picker + "-01"); 
+        const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        timeLabel = `Bulan_${namaBulan[d.getMonth()]}_${d.getFullYear()}`;
+
+        filterOrders = orders.filter(o => { const p = parseDateString(o.date); return p && p.monthStr === picker; });
+        filterExpenses = expenses.filter(e => { const p = parseDateString(e.tanggal || e.date); return p && p.monthStr === picker; });
+    }
+
+    if(filterOrders.length === 0 && filterExpenses.length === 0) {
+        return alert("Tidak ada data pada rentang waktu tersebut di cabang ini.");
+    }
+
+    // Proses pembuatan Excel
+    const wb = XLSX.utils.book_new();
+    if(filterOrders.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterOrders), "Pemasukan");
+    if(filterExpenses.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterExpenses), "Pengeluaran");
+    
+    // Merakit nama file dinamis sesuai pilihan
+    const safeTenantName = typeof tenantName !== 'undefined' ? tenantName.replace(/\s+/g, '_') : 'Cabang';
+    const fileName = `Backup_${safeTenantName}_${timeLabel}.xlsx`;
+    
+    XLSX.writeFile(wb, fileName);
+    
+    closeBackupModal();
+    if(typeof triggerNotification === "function") {
+        triggerNotification(`✅ Berhasil mengunduh file: ${fileName}`);
+    } else {
+        alert(`✅ Berhasil mengunduh file: ${fileName}`);
+    }
+}
+
+// ====================================================================
+// FITUR KOSONGKAN SEMUA DATA (KIRIM PERINTAH KE GOOGLE SHEETS)
+// ====================================================================
+
+function confirmClearData() {
+    // Pastikan owner sudah memilih cabang yang ingin dihapus datanya
+    if (!SCRIPT_URL) return alert("Pilih cabang terlebih dahulu di menu Setting sebelum menghapus data!");
+
+    // 1. Peringatan Berlapis Pertama
+    const isBackedUp = confirm(`PERINGATAN!\n\nApakah Anda SUDAH mem-backup data (Excel) untuk cabang ${tenantName}?\n\nData yang dihapus tidak bisa dikembalikan lagi.`);
+    if (!isBackedUp) {
+        return alert("Aksi dibatalkan. Silakan lakukan Backup Data terlebih dahulu.");
+    }
+
+    // 2. Keamanan Berlapis Kedua (Wajib ketik HAPUS)
+    const typingConfirm = prompt(`Ketik kata HAPUS (huruf besar) untuk mengonfirmasi pembersihan seluruh database di cabang ${tenantName}:`);
+    if (typingConfirm !== "HAPUS") {
+        return alert("Konfirmasi gagal. Data batal dikosongkan.");
+    }
+
+    // 3. Eksekusi Hapus dari Tampilan Aplikasi (Nol-kan semua)
+    orders = [];
+    expenses = [];
+    
+    // Refresh tampilan analitik dan tabel agar kembali kosong
+    applyAnalyticsFilter();
+
+    // 4. Perintahkan Google Sheets Cabang untuk benar-benar menghapus isinya
+    if(typeof triggerNotification === "function") triggerNotification("Sedang menghapus database di server...");
+    
+    fetch(SCRIPT_URL, { 
+        method: 'POST', 
+        mode: 'no-cors', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify({ action: "clearAllData" }) 
+    }).then(() => {
+        // Tunda alert sebentar agar notifikasi sempat muncul
+        setTimeout(() => {
+            alert(`✅ Semua data transaksi dan pengeluaran di cabang ${tenantName} telah berhasil dibersihkan dari server.`);
+        }, 500);
+    }).catch(err => {
+        console.log(err);
+        alert("Data di layar sudah dikosongkan, tapi gagal terhubung ke server Google Sheets.");
+    });
+}
+
+
+async function saveNewOwnerPin() {
+    try {
+        // 1. Cek apakah kotak inputnya benar-benar ada di HTML
+        const elOldPin = document.getElementById('old-owner-pin');
+        const elNewPin = document.getElementById('new-owner-pin');
+        
+        if (!elOldPin || !elNewPin) {
+            return alert("Error Sistem: Kotak input PIN tidak ditemukan di layar.");
+        }
+
+        const oldPin = elOldPin.value.trim();
+        const newPin = elNewPin.value.trim();
+        
+        // 2. Validasi input kosong
+        if (!oldPin) return alert("Masukkan PIN lama Anda terlebih dahulu!");
+        if (newPin.length < 4) return alert("PIN baru harus minimal 4 angka!");
+
+        // 3. Kunci tombol agar tidak di-klik dua kali
+        const btn = document.getElementById('btn-simpan-pin');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
+        btn.disabled = true;
+
+        // 4. Tanya ke server
+        const checkResponse = await fetch(`${MASTER_SCRIPT_URL}?action=getOwnerPin`);
+        const checkResult = await checkResponse.json();
+        const validPin = checkResult.pin || "1234";
+
+        if (oldPin !== validPin) {
+            alert("Akses Ditolak: PIN Lama yang Anda masukkan SALAH!");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return; 
+        }
+
+        // 5. Simpan ke server
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+        
+        const payload = { action: 'updateOwnerPin', pin: newPin };
+        const response = await fetch(MASTER_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        const res = await response.json();
+
+        if (res.status === 'success') {
+            alert(`✅ SUKSES! PIN Owner berhasil diubah menjadi ${newPin}.`);
+            elOldPin.value = "";
+            elNewPin.value = "";
+        } else {
+            alert("Gagal mengubah PIN di server Google.");
+        }
+
+        // Kembalikan tombol seperti semula
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+    } catch(e) {
+        // Tangkap jika ada error tersembunyi
+        alert("Terjadi masalah pada sistem JS: " + e.message);
+        
+        const btn = document.getElementById('btn-simpan-pin');
+        if(btn) {
+            btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Validasi & Simpan PIN`;
+            btn.disabled = false;
+        }
+    }
 }

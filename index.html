@@ -57,7 +57,7 @@
         <div class="w-full bg-white p-8 rounded-3xl border border-slate-100 shadow-xl relative z-10 text-center">
             <div class="w-55 h-30 mx-auto mb-4 flex items-center justify-center">
                     <img src="logo/foresa.png" alt="Logo Foresa" class="w-full h-full object-contain">
-            </div>
+                </div>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
                 Owner Dashboard
             </h1>
@@ -128,7 +128,7 @@
             <main class="col-span-1 lg:col-span-9 space-y-6">
                 <div id="view-analytics" class="tab-content space-y-6">
                     <div
-                        class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row gap-4 items-end lg:items-center justify-between">
+                        class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
                         <div>
                             <h3 class="font-bold text-slate-800 text-sm">
                                 Rentang Analitik Rekap
@@ -188,6 +188,17 @@
                             </h4>
                         </div>
                     </div>
+<!-- STATUS KEUANGAN (LUNAS VS PIUTANG) -->
+<div class="grid grid-cols-2 gap-4">
+    <div class="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-100 shadow-sm text-center">
+        <span class="text-[10px] font-bold text-emerald-600 block uppercase"><i class="fa-solid fa-check-circle mr-1"></i> Sudah Lunas</span>
+        <h4 id="stat-lunas" class="text-sm font-extrabold text-emerald-700 mt-1">Rp 0</h4>
+    </div>
+    <div class="bg-amber-50/70 p-4 rounded-2xl border border-amber-100 shadow-sm text-center">
+        <span class="text-[10px] font-bold text-amber-600 block uppercase"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Belum Bayar (Piutang)</span>
+        <h4 id="stat-belum-lunas" class="text-sm font-extrabold text-amber-700 mt-1">Rp 0</h4>
+    </div>
+</div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div
@@ -432,7 +443,7 @@
                                 <label
                                     class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">PIN
                                     Cabang</label>
-                                <input type="password" id="new-branch-pin" placeholder="••••" maxlength="6"
+                                <input type="text" id="new-branch-pin" placeholder="••••" maxlength="6"
                                     class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-[#40E0D0]">
                             </div>
                         </div>
@@ -452,9 +463,53 @@
                                 analitik rekap laporan keuangan.
                             </p>
                         </div>
+                        
                         <div id="branch-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
+                    <!-- MANAJEMEN DATA (BACKUP & KOSONGKAN) -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+    <div>
+        <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-database theme-color"></i> Manajemen Data Cabang
+        </h3>
+        <p class="text-[10px] text-slate-400 mt-1">Kelola cadangan laporan excel dan pembersihan memori sistem cabang yang sedang aktif saat ini.</p>
+    </div>
+    <div class="space-y-3 pt-2">
+        <button onclick="openBackupModal()" class="w-full bg-emerald-50 text-emerald-600 border border-emerald-100 font-bold py-3 rounded-xl text-xs hover:bg-emerald-100 transition-all flex justify-center items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Backup Data (Filter)
+        </button>
+        <button onclick="confirmClearData()" class="w-full bg-rose-50 text-rose-500 border border-rose-100 font-bold py-3 rounded-xl text-xs hover:bg-rose-100 transition-all flex justify-center items-center gap-2">
+            <i class="fa-solid fa-trash-can"></i> Kosongkan Semua Data
+        </button>
+    </div>
+</div>
+
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4 mb-4">
+    <div>
+        <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-key theme-color"></i> Keamanan Akun Owner
+        </h3>
+        <p class="text-[10px] text-slate-400 mt-1">Ubah PIN default (1234) untuk mengamankan halaman Dashboard Owner. Wajib memasukkan PIN lama untuk validasi keamanan.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">PIN Lama (Saat Ini)</label>
+            <input type="text" id="old-owner-pin" placeholder="Masukkan PIN lama" maxlength="6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold tracking-widest focus:outline-none focus:border-amber-400 transition-all">
+        </div>
+        <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">PIN Baru (4-6 Angka)</label>
+            <input type="text" id="new-owner-pin" placeholder="Contoh: 889900" maxlength="6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold tracking-widest focus:outline-none focus:border-[#40E0D0] transition-all">
+        </div>
+    </div>
+    
+    <button id="btn-simpan-pin" onclick="saveNewOwnerPin()" class="theme-bg text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-md shadow-cyan-100 w-full sm:w-auto">
+    <i class="fa-solid fa-floppy-disk"></i> Validasi & Simpan PIN
+</button>
+</div>
+
                 </div>
+                
             </main>
         </div>
     </div>
@@ -481,7 +536,7 @@
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PIN Keamanan
                         (4-6 Digit)</label>
-                    <input type="password" id="modal-cashier-pin" placeholder="••••" maxlength="6"
+                    <input type="text" id="modal-cashier-pin" placeholder="••••" maxlength="6"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold text-center tracking-widest focus:outline-none focus:border-[#40E0D0]" />
                 </div>
             </div>
@@ -577,7 +632,7 @@
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">PIN Cabang
                         Baru</label>
-                    <input type="password" id="edit-branch-pin" maxlength="6"
+                    <input type="text" id="edit-branch-pin" maxlength="6"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs focus:outline-none focus:border-[#40E0D0] text-center font-bold tracking-widest">
                 </div>
             </div>
@@ -593,6 +648,36 @@
             </div>
         </div>
     </div>
+
+<!-- MODAL BACKUP DATA -->
+<div id="backupModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-2xl max-w-sm w-full space-y-4">
+        <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+            <i class="fa-solid fa-file-excel text-emerald-500"></i> Export & Backup Data
+        </h3>
+        <div class="space-y-3 text-left text-xs">
+            <div>
+                <label class="font-bold text-slate-500 mb-1 block">Pilih Filter Waktu:</label>
+                <select id="backup-filter-mode" onchange="toggleBackupInputs()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold outline-none focus:border-emerald-400">
+                    <option value="all">Semua Waktu (Full Backup)</option>
+                    <option value="month">Pilih Bulan & Tahun</option>
+                    <option value="date">Pilih Tanggal Spesifik</option>
+                </select>
+            </div>
+            <div id="backup-wrap-date" class="hidden">
+                <input type="date" id="backup-input-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold outline-none focus:border-emerald-400">
+            </div>
+            <div id="backup-wrap-month" class="hidden">
+                <input type="month" id="backup-input-month" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold outline-none focus:border-emerald-400">
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+            <button onclick="closeBackupModal()" class="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-xs hover:bg-slate-200">Batal</button>
+            <button onclick="processBackup()" class="w-full bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs hover:bg-emerald-600 shadow-md">Unduh Excel</button>
+        </div>
+    </div>
+</div>
+
 
     <script src="owner.js"></script>
 </body>
