@@ -475,17 +475,28 @@ async function fetchBranchAnalyticsData() {
 
 function toggleCustomDateFilter() {
     const range = document.getElementById('analytics-filter-range').value;
-    const container = document.getElementById('custom-date-container');
+    const containerCustom = document.getElementById('custom-date-container');
+    const containerMonth = document.getElementById('custom-month-container');
+
+    // Sembunyikan semuanya dulu
+    if (containerCustom) containerCustom.classList.add('hidden');
+    if (containerMonth) containerMonth.classList.add('hidden');
 
     if (range === 'custom') {
-        container.classList.remove('hidden');
+        if (containerCustom) containerCustom.classList.remove('hidden');
         if (!document.getElementById('filter-start').value) {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filter-start').value = today;
             document.getElementById('filter-end').value = today;
         }
-    } else {
-        container.classList.add('hidden');
+    } else if (range === 'pilih-bulan') {
+        if (containerMonth) containerMonth.classList.remove('hidden');
+        if (!document.getElementById('filter-month').value) {
+            const now = new Date();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
+            document.getElementById('filter-month').value = `${y}-${m}`;
+        }
     }
     applyAnalyticsFilter();
 }
@@ -495,85 +506,85 @@ function applyAnalyticsFilter() {
     const now = new Date();
     const jktTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
     const todayStr = jktTime.toISOString().split('T')[0];
-    const currentTimestamp = jktTime.getTime();
+    const currentMonthStr = `${jktTime.getFullYear()}-${String(jktTime.getMonth() + 1).padStart(2, '0')}`;
+    
+    // --- PERBAIKAN LOGIKA KALENDER ---
+    // Buat objek kalender untuk batas "Hari Ini"
+    const todayObj = new Date(todayStr);
+    
+    // Buat batas mutlak 7 hari & 30 hari ke belakang
+    const past7Days = new Date(todayStr);
+    past7Days.setDate(past7Days.getDate() - 7);
+    
+    const past30Days = new Date(todayStr);
+    past30Days.setDate(past30Days.getDate() - 30);
+    // ---------------------------------
 
     let filteredOrders = [];
     let filteredExpenses = [];
 
-    // Logika Filter Rentang Waktu (Tetap sama seperti aslinya)
+    // Logika Filter Rentang Waktu & Bulan
     if (range === 'custom') {
         const startVal = document.getElementById('filter-start').value;
         const endVal = document.getElementById('filter-end').value;
-
         if (startVal && endVal) {
             const startObj = new Date(startVal); startObj.setHours(0, 0, 0, 0);
             const endObj = new Date(endVal); endObj.setHours(23, 59, 59, 999);
 
-            filteredOrders = orders.filter(o => {
-                const parsed = parseDateString(o.date);
-                if (!parsed) return false;
-                const d = new Date(parsed.dateStr);
-                return d >= startObj && d <= endObj;
-            });
-            filteredExpenses = expenses.filter(e => {
-                const parsed = parseDateString(e.tanggal || e.date);
-                if (!parsed) return false;
-                const d = new Date(parsed.dateStr);
-                return d >= startObj && d <= endObj;
-            });
+            filteredOrders = orders.filter(o => { const p = parseDateString(o.date); return p && new Date(p.dateStr) >= startObj && new Date(p.dateStr) <= endObj; });
+            filteredExpenses = expenses.filter(e => { const p = parseDateString(e.tanggal || e.date); return p && new Date(p.dateStr) >= startObj && new Date(p.dateStr) <= endObj; });
         }
+    } else if (range === 'pilih-bulan') {
+        const monthVal = document.getElementById('filter-month').value;
+        filteredOrders = orders.filter(o => { const p = parseDateString(o.date); return p && p.monthStr === monthVal; });
+        filteredExpenses = expenses.filter(e => { const p = parseDateString(e.tanggal || e.date); return p && p.monthStr === monthVal; });
     } else {
         filteredOrders = orders.filter(o => {
-            const parsed = parseDateString(o.date);
-            if (!parsed) return false;
-            if (range === 'hari-ini') return parsed.dateStr === todayStr;
-            if (range === '7-hari') return (currentTimestamp - parsed.timestamp) <= 7 * 24 * 60 * 60 * 1000;
-            if (range === '30-hari') return (currentTimestamp - parsed.timestamp) <= 30 * 24 * 60 * 60 * 1000;
+            const p = parseDateString(o.date);
+            if (!p) return false;
+            
+            const itemDate = new Date(p.dateStr); // Ubah tanggal nota jadi objek kalender
+            
+            if (range === 'hari-ini') return p.dateStr === todayStr;
+            if (range === 'bulan-ini') return p.monthStr === currentMonthStr;
+            // Gunakan perbandingan kalender murni (Hanya izinkan data sampai Hari Ini)
+            if (range === '7-hari') return itemDate >= past7Days && itemDate <= todayObj;
+            if (range === '30-hari') return itemDate >= past30Days && itemDate <= todayObj;
             return true;
         });
 
         filteredExpenses = expenses.filter(e => {
-            const parsed = parseDateString(e.tanggal || e.date);
-            if (!parsed) return false;
-            if (range === 'hari-ini') return parsed.dateStr === todayStr;
-            if (range === '7-hari') return (currentTimestamp - parsed.timestamp) <= 7 * 24 * 60 * 60 * 1000;
-            if (range === '30-hari') return (currentTimestamp - parsed.timestamp) <= 30 * 24 * 60 * 60 * 1000;
+            const p = parseDateString(e.tanggal || e.date);
+            if (!p) return false;
+            
+            const itemDate = new Date(p.dateStr);
+            
+            if (range === 'hari-ini') return p.dateStr === todayStr;
+            if (range === 'bulan-ini') return p.monthStr === currentMonthStr;
+            if (range === '7-hari') return itemDate >= past7Days && itemDate <= todayObj;
+            if (range === '30-hari') return itemDate >= past30Days && itemDate <= todayObj;
             return true;
         });
     }
 
-    // ==============================================================
-    // PERHITUNGAN BARU: LUNAS, PIUTANG, DAN ANTI-SELISIH
-    // ==============================================================
-    
-    // Pisahkan nota yang tidak dibatalkan
+    // Pemisahan Lunas & Belum Bayar
     const validOrders = filteredOrders.filter(o => o.status !== "Dibatalkan");
-    
-    // Pisahkan Lunas dan Piutang
     const lunasOrders = validOrders.filter(o => o.paymentStatus !== "Belum Bayar");
     const piutangOrders = validOrders.filter(o => o.paymentStatus === "Belum Bayar");
 
-    // Total Omset Kotor Keseluruhan
     const grossIncome = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-    // Uang Lunas & Belum Lunas
     const tLunas = lunasOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
     const tBelumLunas = piutangOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-    // Pengeluaran
     const totalExpense = filteredExpenses.reduce((sum, e) => sum + Number(e.nominal || 0), 0);
-    
-    // Laba Bersih diambil HANYA dari UANG LUNAS dikurangi PENGELUARAN
     const netProfit = tLunas - totalExpense;
 
-    // HITUNG METODE PEMBAYARAN (ANTI-SELISIH HANYA DARI YANG LUNAS)
     const tQris = lunasOrders.filter(o => o.method === 'QRIS').reduce((sum, o) => sum + Number(o.total || 0), 0);
     const tTransfer = lunasOrders.filter(o => o.method === 'Transfer Bank').reduce((sum, o) => sum + Number(o.total || 0), 0);
-    // Selain QRIS dan Transfer dianggap Tunai
     const tTunai = lunasOrders.filter(o => o.method !== 'QRIS' && o.method !== 'Transfer Bank').reduce((sum, o) => sum + Number(o.total || 0), 0);
 
     currentFilteredOrders = filteredOrders;
     currentFilteredExpenses = filteredExpenses;
 
-    // UPDATE UI KOTAK
     if (document.getElementById('stat-income')) document.getElementById('stat-income').innerText = formatRupiah(grossIncome);
     if (document.getElementById('stat-expense')) document.getElementById('stat-expense').innerText = formatRupiah(totalExpense);
     if (document.getElementById('stat-profit')) document.getElementById('stat-profit').innerText = formatRupiah(netProfit);
@@ -596,7 +607,6 @@ function applyAnalyticsFilter() {
         }
     }
 
-    // RENDER TABEL
     renderIncomeTable(filteredOrders);
     renderExpensesTable(filteredExpenses);
     generateCashflowChart(filteredOrders, filteredExpenses);
@@ -609,46 +619,62 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
 
     if (cashflowChartInstance) cashflowChartInstance.destroy();
 
+    // 1. CARI TAHU RENTANG WAKTU (Mendeteksi Harian vs Bulanan)
+    let minDate = Infinity;
+    let maxDate = -Infinity;
+    
+    [...filteredOrders, ...filteredExpenses].forEach(item => {
+        const parsed = parseDateString(item.date || item.tanggal);
+        if (parsed) {
+            if (parsed.timestamp < minDate) minDate = parsed.timestamp;
+            if (parsed.timestamp > maxDate) maxDate = parsed.timestamp;
+        }
+    });
+
+    // JIKA rentang lebih dari 60 hari atau memilih "Semua", grafik OTOMATIS jadi BULANAN
+    const dayDiff = (maxDate - minDate) / (1000 * 60 * 60 * 24);
+    const isMonthlyGroup = dayDiff > 60 || document.getElementById('analytics-filter-range').value === 'semua';
+
     const dateMap = {};
 
-    // 1. Petakan Pemasukan Lunas dan Piutang (Belum Bayar)
     filteredOrders.forEach(o => {
         const parsed = parseDateString(o.date);
         if (!parsed) return;
         
-        if (!dateMap[parsed.dateStr]) {
-            dateMap[parsed.dateStr] = { income: 0, expense: 0, piutang: 0 };
-        }
+        const key = isMonthlyGroup ? parsed.monthStr : parsed.dateStr; // <--- Kunci Pengelompokan
+        
+        if (!dateMap[key]) dateMap[key] = { income: 0, expense: 0, piutang: 0 };
         
         if (o.status !== "Dibatalkan") {
-            if (o.paymentStatus === "Belum Bayar") {
-                // Masukkan ke keranjang Piutang (Kuning)
-                dateMap[parsed.dateStr].piutang += Number(o.total || 0);
-            } else {
-                // Masukkan ke keranjang Pemasukan Lunas (Cyan)
-                dateMap[parsed.dateStr].income += Number(o.total || 0);
-            }
+            if (o.paymentStatus === "Belum Bayar") dateMap[key].piutang += Number(o.total || 0);
+            else dateMap[key].income += Number(o.total || 0);
         }
     });
 
-    // 2. Petakan Pengeluaran
     filteredExpenses.forEach(e => {
         const parsed = parseDateString(e.tanggal || e.date);
         if (!parsed) return;
         
-        if (!dateMap[parsed.dateStr]) {
-            dateMap[parsed.dateStr] = { income: 0, expense: 0, piutang: 0 };
-        }
-        dateMap[parsed.dateStr].expense += Number(e.nominal || 0);
+        const key = isMonthlyGroup ? parsed.monthStr : parsed.dateStr;
+        
+        if (!dateMap[key]) dateMap[key] = { income: 0, expense: 0, piutang: 0 };
+        dateMap[key].expense += Number(e.nominal || 0);
     });
 
-    const sortedDates = Object.keys(dateMap).sort();
-    const formattedLabels = sortedDates.map(d => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+    // 2. FORMAT NAMA LABEL GRAFIK (Misal: "Agt 2026" atau "15 Agt")
+    const sortedKeys = Object.keys(dateMap).sort();
+    const formattedLabels = sortedKeys.map(k => {
+        if (isMonthlyGroup) {
+            const d = new Date(k + "-01");
+            return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }); // Output: Jan 2026
+        } else {
+            return new Date(k).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }); // Output: 15 Jan
+        }
+    });
     
-    // 3. Siapkan Data untuk Grafik
-    const incomeData = sortedDates.map(d => dateMap[d].income);
-    const piutangData = sortedDates.map(d => dateMap[d].piutang);
-    const expenseData = sortedDates.map(d => dateMap[d].expense);
+    const incomeData = sortedKeys.map(k => dateMap[k].income);
+    const piutangData = sortedKeys.map(k => dateMap[k].piutang);
+    const expenseData = sortedKeys.map(k => dateMap[k].expense);
 
     cashflowChartInstance = new Chart(ctx, {
         type: 'bar',
@@ -656,7 +682,6 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
             labels: formattedLabels,
             datasets: [
                 { label: 'Lunas (Rp)', data: incomeData, backgroundColor: '#40E0D0', borderRadius: 4, barPercentage: 0.6 },
-                // TAMBAHAN: Bar Kuning untuk Piutang
                 { label: 'Belum Bayar (Rp)', data: piutangData, backgroundColor: '#fbbf24', borderRadius: 4, barPercentage: 0.6 },
                 { label: 'Keluar (Rp)', data: expenseData, backgroundColor: '#f43f5e', borderRadius: 4, barPercentage: 0.6 }
             ]
@@ -680,7 +705,16 @@ function renderExpensesTable(filteredExpenses) {
         return;
     }
 
-    tbody.innerHTML = filteredExpenses.map(e => {
+    // Urutkan dari yang terbaru
+    const sortedExpenses = [...filteredExpenses].sort((a, b) => new Date(b.tanggal || b.date) - new Date(a.tanggal || a.date));
+
+    // ==============================================================
+    // ANTI-FREEZE: Batasi hanya menggambar 100 baris di layar
+    // ==============================================================
+    const MAX_RENDER = 100;
+    const expensesToRender = sortedExpenses.slice(0, MAX_RENDER);
+
+    let htmlString = expensesToRender.map(e => {
         const parsed = parseDateString(e.tanggal || e.date);
         const dateDisplay = parsed ? parsed.dateStr : '-';
 
@@ -695,7 +729,20 @@ function renderExpensesTable(filteredExpenses) {
         </tr>
         `;
     }).join('');
+
+    if (sortedExpenses.length > MAX_RENDER) {
+        htmlString += `
+        <tr>
+            <td colspan="6" class="text-center py-4 text-[11px] font-bold text-amber-600 bg-amber-50">
+                <i class="fa-solid fa-circle-info mr-1"></i> Menampilkan ${MAX_RENDER} dari total ${sortedExpenses.length} pengeluaran.<br>
+                <span class="text-slate-500 font-medium">Gunakan kotak pencarian atau Export Excel untuk melihat seluruh data.</span>
+            </td>
+        </tr>`;
+    }
+
+    tbody.innerHTML = htmlString;
 }
+
 
 function renderIncomeTable(filteredOrders) {
     const tbody = document.getElementById('income-table-body');
@@ -709,16 +756,20 @@ function renderIncomeTable(filteredOrders) {
     // Urutkan nota dari yang terbaru
     const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    tbody.innerHTML = sortedOrders.map(o => {
+    // ==============================================================
+    // ANTI-FREEZE: Batasi hanya menggambar 100 baris di layar
+    // ==============================================================
+    const MAX_RENDER = 100;
+    const ordersToRender = sortedOrders.slice(0, MAX_RENDER);
+
+    let htmlString = ordersToRender.map(o => {
         const parsed = parseDateString(o.date);
         const dateDisplay = parsed ? parsed.dateStr : '-';
 
-        // Desain Badge Metode Pembayaran
         let methodBadge = `<span class="bg-slate-100 text-slate-700 font-medium px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-money-bill text-[9px] mr-1"></i>${o.method || 'Tunai / Cash'}</span>`;
         if (o.method === 'QRIS') methodBadge = `<span class="bg-cyan-50 text-cyan-600 border border-cyan-100 font-bold px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-qrcode text-[9px] mr-1"></i>QRIS</span>`;
         if (o.method === 'Transfer Bank') methodBadge = `<span class="bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-building-columns text-[9px] mr-1"></i>Transfer</span>`;
 
-        // Peringatan jika belum lunas
         let statusText = o.paymentStatus === 'Belum Bayar' ? `<br><span class="text-rose-500 font-bold text-[9px] bg-rose-50 px-1.5 py-0.5 rounded mt-1 inline-block">Belum Bayar</span>` : '';
 
         return `
@@ -732,7 +783,20 @@ function renderIncomeTable(filteredOrders) {
         </tr>
         `;
     }).join('');
+
+    if (sortedOrders.length > MAX_RENDER) {
+        htmlString += `
+        <tr>
+            <td colspan="6" class="text-center py-4 text-[11px] font-bold text-amber-600 bg-amber-50">
+                <i class="fa-solid fa-circle-info mr-1"></i> Menampilkan ${MAX_RENDER} dari total ${sortedOrders.length} transaksi.<br>
+                <span class="text-slate-500 font-medium">Gunakan kotak pencarian atau Export Excel untuk melihat seluruh data.</span>
+            </td>
+        </tr>`;
+    }
+
+    tbody.innerHTML = htmlString;
 }
+
 
 function exportIncomeToExcel() {
     if (currentFilteredOrders.length === 0) return alert("Tidak ada data pemasukan untuk diexport pada periode ini.");
