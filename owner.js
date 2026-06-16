@@ -118,45 +118,48 @@ async function loadMasterDatabase() {
 async function createNewBranch() {
     const nameInput = document.getElementById('new-branch-name');
     const urlInput = document.getElementById('new-branch-url');
-    const pinInput = document.getElementById('new-branch-pin'); // 1. Tangkap elemen PIN
+    const pinInput = document.getElementById('new-branch-pin'); 
+    const phoneInput = document.getElementById('new-branch-phone'); 
+    const addressInput = document.getElementById('new-branch-address');
 
     const name = nameInput.value.trim();
     const url = urlInput.value.trim();
-    const pin = pinInput.value.trim(); // 2. Ambil nilai PIN-nya
+    const pin = pinInput.value.trim(); 
+    const phone = phoneInput ? phoneInput.value.trim() : "";
+    const address = addressInput ? addressInput.value.trim() : "";
 
-    // 3. Pastikan PIN juga wajib diisi sebelum lanjut
     if (!name || !url || !pin) return alert("Harap isi seluruh form pendaftaran cabang, termasuk PIN!");
+
+    // --- ANIMASI LOADING DIMULAI ---
+    const btn = document.querySelector('button[onclick="createNewBranch()"]');
+    let originalText = "Simpan";
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+        btn.disabled = true;
+    }
 
     const branchId = 'CAB-' + Date.now();
 
     try {
-        const payload = {
-            action: 'addBranch',
-            id: branchId,
-            name: name,
-            url: url,
-            pin: pin // 4. Sisipkan PIN ke dalam payload data
-        };
-
-        const response = await fetch(MASTER_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        const payload = { action: 'addBranch', id: branchId, name: name, url: url, pin: pin, phone: phone, address: address };
+        const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
         if (res.status === 'success') {
             triggerNotification("Cabang Baru Berhasil Didaftarkan!");
-            // 5. Kosongkan semua form setelah sukses, termasuk PIN
-            nameInput.value = "";
-            urlInput.value = "";
-            pinInput.value = ""; 
+            nameInput.value = ""; urlInput.value = ""; pinInput.value = ""; 
+            if (phoneInput) phoneInput.value = ""; 
+            if (addressInput) addressInput.value = "";
             loadMasterDatabase();
         } else {
             alert("Gagal mendaftarkan cabang: " + res.message);
         }
-    } catch (e) {
-        console.error(e);
-        alert("Terjadi kesalahan transmisi data.");
+    } catch (e) { 
+        console.error(e); alert("Terjadi kesalahan transmisi data."); 
+    } finally {
+        // --- KEMBALIKAN TOMBOL KE SEMULA ---
+        if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
 }
 
@@ -211,36 +214,40 @@ function openEditBranchModal(id) {
     document.getElementById('edit-branch-name').value = branch.name;
     document.getElementById('edit-branch-url').value = branch.url;
     document.getElementById('edit-branch-pin').value = branch.pin || '';
+    document.getElementById('edit-branch-phone').value = branch.phone || ''; // BARU
+    document.getElementById('edit-branch-address').value = branch.address || ''; // BARU
     document.getElementById('editBranchModal').classList.remove('hidden');
-
-}
-
-function closeEditBranchModal() {
-    document.getElementById('editBranchModal').classList.add('hidden');
 }
 
 async function submitEditBranch() {
     const id = document.getElementById('edit-branch-id').value;
     const name = document.getElementById('edit-branch-name').value.trim();
     const url = document.getElementById('edit-branch-url').value.trim();
-    const pin = document.getElementById('edit-branch-pin').value.trim(); // 1. Tangkap input PIN yang diedit
+    const pin = document.getElementById('edit-branch-pin').value.trim();
+    const phone = document.getElementById('edit-branch-phone') ? document.getElementById('edit-branch-phone').value.trim() : "";
+    const address = document.getElementById('edit-branch-address') ? document.getElementById('edit-branch-address').value.trim() : "";
 
-    // 2. Tambahkan validasi agar PIN juga wajib diisi saat proses edit
     if (!name || !url || !pin) return alert("Data cabang dan PIN tidak boleh kosong!");
     
+    // --- ANIMASI LOADING DIMULAI ---
+    const btn = document.querySelector('button[onclick="submitEditBranch()"]');
+    let originalText = "Update";
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
+        btn.disabled = true; // Kunci tombol
+    }
     document.getElementById('editBranchModal').classList.add('opacity-50');
 
     try {
-        // 3. Sisipkan pin ke dalam payload untuk dikirim ke Master Database
-        const payload = { action: 'editBranch', id: id, name: name, url: url, pin: pin };
-        
+        const payload = { action: 'editBranch', id: id, name: name, url: url, pin: pin, phone: phone, address: address };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
         if (res.status === 'success') {
             triggerNotification(`Data Cabang berhasil diperbarui!`);
             closeEditBranchModal();
-            loadMasterDatabase(); // Refresh data grid
+            loadMasterDatabase(); 
         }
     } catch (e) {
         console.error(e);
@@ -248,9 +255,16 @@ async function submitEditBranch() {
         triggerNotification("Perintah update dikirim ke Master.");
         setTimeout(loadMasterDatabase, 1500);
     } finally {
+        // --- KEMBALIKAN TOMBOL KE SEMULA ---
         document.getElementById('editBranchModal').classList.remove('opacity-50');
+        if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
 }
+
+function closeEditBranchModal() {
+    document.getElementById('editBranchModal').classList.add('hidden');
+}
+
 
 async function deleteBranch(id) {
     if (!confirm("Hapus Cabang ini? (Hanya menghapus koneksi di Dashboard Master, tidak menghapus data asli di dalam Spreadsheet Cabangnya).")) return;
@@ -342,16 +356,21 @@ async function saveNewCashier() {
 
     if (!name || !pin) return alert("Harap lengkapi nama kasir dan PIN!");
 
+    // --- ANIMASI LOADING DIMULAI ---
+    const btn = document.querySelector('button[onclick="saveNewCashier()"]');
+    let originalText = "Simpan";
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+        btn.disabled = true;
+    }
+
     const cashierId = 'KSR-' + Date.now();
     document.getElementById('cashierModal').classList.add('opacity-50');
 
     try {
         const payload = { action: 'addCashier', id: cashierId, name: name, pin: pin };
-
-        const response = await fetch(MASTER_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
         if (res.status === 'success') {
@@ -365,7 +384,9 @@ async function saveNewCashier() {
         triggerNotification(`Perintah simpan ${name} dikirim.`);
         setTimeout(loadMasterDatabase, 1500);
     } finally {
+        // --- KEMBALIKAN TOMBOL KE SEMULA ---
         document.getElementById('cashierModal').classList.remove('opacity-50');
+        if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
 }
 
@@ -389,6 +410,16 @@ async function submitEditCashier() {
     const pin = document.getElementById('edit-cashier-pin').value.trim();
 
     if (!name || !pin) return alert("Data tidak boleh kosong!");
+    
+    // --- ANIMASI LOADING DIMULAI ---
+    const btn = document.querySelector('button[onclick="submitEditCashier()"]');
+    let originalText = "Update";
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
+        btn.disabled = true;
+    }
+    
     document.getElementById('editCashierModal').classList.add('opacity-50');
 
     try {
@@ -407,7 +438,9 @@ async function submitEditCashier() {
         triggerNotification("Perintah update dikirim.");
         setTimeout(loadMasterDatabase, 1500);
     } finally {
+        // --- KEMBALIKAN TOMBOL KE SEMULA ---
         document.getElementById('editCashierModal').classList.remove('opacity-50');
+        if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
 }
 
