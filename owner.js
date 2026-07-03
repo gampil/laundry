@@ -2,8 +2,8 @@
 // KONFIGURASI DATABASE MASTER & STATE GLOBAL
 // ==========================================================================
 
-// ✅ MASUKKAN LINK GOOGLE SCRIPT MASTER ANDA DI SINI
-const MASTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwidT5jhAd4vtRpOiqRf0C5yc8quxuzTioutoYdF9d2NufVCbtS0moyvH6GCrhOxkgx/exec";
+
+const _0x307340=_0x571b;(function(_0x5b9a60,_0x3cfc65){const _0x5e1bd7=_0x571b,_0x14b65d=_0x5b9a60();while(!![]){try{const _0x193441=-parseInt(_0x5e1bd7(0x132))/(-0xb51*-0x2+0x15d2+-0x2c73)+-parseInt(_0x5e1bd7(0x12d))/(-0x1a01+0x13d5+0x71*0xe)+-parseInt(_0x5e1bd7(0x136))/(-0x1221+-0x1*0x2074+0x3298)*(-parseInt(_0x5e1bd7(0x12f))/(-0x7e6+-0x1*-0x262d+-0x1e43))+-parseInt(_0x5e1bd7(0x125))/(-0xe*-0x25c+0x2522*0x1+-0x4625*0x1)*(-parseInt(_0x5e1bd7(0x126))/(-0x1044+-0x30a+0x1354))+-parseInt(_0x5e1bd7(0x12b))/(-0x1*-0x2355+0x11b9*-0x1+-0x283*0x7)+parseInt(_0x5e1bd7(0x123))/(0x349*0xa+0x23e7+-0xf1*0x49)+parseInt(_0x5e1bd7(0x12e))/(-0x26f4+0xa4a+0x1cb3);if(_0x193441===_0x3cfc65)break;else _0x14b65d['push'](_0x14b65d['shift']());}catch(_0x4e7a61){_0x14b65d['push'](_0x14b65d['shift']());}}}(_0x430c,-0x1*-0xd9f55+-0xc61*0xa7+0x29c2a));const MASTER_SCRIPT_URL=_0x307340(0x131)+_0x307340(0x134)+_0x307340(0x122)+_0x307340(0x124)+_0x307340(0x128)+_0x307340(0x133)+_0x307340(0x127)+_0x307340(0x12c)+_0x307340(0x138)+_0x307340(0x135)+_0x307340(0x137)+'ec',API_KEY=_0x307340(0x130)+_0x307340(0x129)+_0x307340(0x12a);function _0x571b(_0x3b3cb8,_0x4a2053){_0x3b3cb8=_0x3b3cb8-(0x57e*-0x7+-0xa2d+-0x10f*-0x2f);const _0x30e043=_0x430c();let _0x2e0e1c=_0x30e043[_0x3b3cb8];return _0x2e0e1c;}function _0x430c(){const _0x33f97d=['S0moyvH6GC','3pahgJR','rhOxkgx/ex','9d2NufVCbt','e.com/macr','1107392KXYISb','os/s/AKfyc','40cTzMoQ','339252MkGPPz','0C5yc8quxu','bwidT5jhAd','reToken202','6_Xyz','5870494oEagUG','zTioutoYdF','974688rdoOLA','10627110KocdhA','3686948zhXnfB','ForesaSecu','https://sc','832717QUCDOq','4vtRpOiqRf','ript.googl'];_0x430c=function(){return _0x33f97d;};return _0x430c();}
 
 let SCRIPT_URL = localStorage.getItem('tenant_script_url') || "";
 let tenantName = localStorage.getItem('tenant_name') || "Pilih Cabang Terlebih Dahulu";
@@ -16,8 +16,9 @@ let cashiers = [];
 let cashflowChartInstance = null;
 let currentFilteredOrders = [];
 let currentFilteredExpenses = [];
+
 window.addEventListener('DOMContentLoaded', () => {
-      // Validasi Sesi Login Owner
+    // Validasi Sesi Login Owner
     const isOwnerLoggedIn = localStorage.getItem('owner_logged_in');
     if (isOwnerLoggedIn === "true") {
         showMainApp();
@@ -45,16 +46,21 @@ async function submitOwnerLogin() {
     const pin = document.getElementById('input-owner-pin').value;
     const btn = document.querySelector('button[onclick="submitOwnerLogin()"]');
     
-    // Munculkan efek loading saat mengecek PIN
     const originalText = btn.innerHTML;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
     btn.disabled = true;
 
     try {
-        // Cek PIN ke Database Master
-        const response = await fetch(`${MASTER_SCRIPT_URL}?action=getOwnerPin`);
+        // PERBAIKAN: TAMBAH API KEY PADA SAAT REQUEST GET
+        const response = await fetch(`${MASTER_SCRIPT_URL}?action=getOwnerPin&apiKey=${API_KEY}`);
         const result = await response.json();
-        const validPin = result.pin || "1234"; // Default 1234 jika belum pernah diubah
+        
+        if (result.error) {
+            alert("Akses Ditolak Server: " + result.error);
+            return;
+        }
+
+        const validPin = result.pin || "1234";
 
         if (pin === validPin) {
             localStorage.setItem('owner_logged_in', "true");
@@ -92,7 +98,8 @@ async function loadMasterDatabase() {
         return;
     }
     try {
-        const response = await fetch(`${MASTER_SCRIPT_URL}?action=getMasterData`);
+        // PERBAIKAN: TAMBAH API KEY PADA SAAT REQUEST GET
+        const response = await fetch(`${MASTER_SCRIPT_URL}?action=getMasterData&apiKey=${API_KEY}`);
         const result = await response.json();
 
         if (result.status === 'success') {
@@ -105,6 +112,8 @@ async function loadMasterDatabase() {
             if (SCRIPT_URL) {
                 fetchBranchAnalyticsData();
             }
+        } else if (result.error) {
+             triggerNotification("Akses Ditolak Server: " + result.error);
         }
     } catch (error) {
         console.error("Gagal memuat master database:", error);
@@ -130,7 +139,6 @@ async function createNewBranch() {
 
     if (!name || !url || !pin) return alert("Harap isi seluruh form pendaftaran cabang, termasuk PIN!");
 
-    // --- ANIMASI LOADING DIMULAI ---
     const btn = document.querySelector('button[onclick="createNewBranch()"]');
     let originalText = "Simpan";
     if (btn) {
@@ -142,7 +150,8 @@ async function createNewBranch() {
     const branchId = 'CAB-' + Date.now();
 
     try {
-        const payload = { action: 'addBranch', id: branchId, name: name, url: url, pin: pin, phone: phone, address: address };
+        // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
+        const payload = { action: 'addBranch', apiKey: API_KEY, id: branchId, name: name, url: url, pin: pin, phone: phone, address: address };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
@@ -158,12 +167,10 @@ async function createNewBranch() {
     } catch (e) { 
         console.error(e); alert("Terjadi kesalahan transmisi data."); 
     } finally {
-        // --- KEMBALIKAN TOMBOL KE SEMULA ---
         if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
 }
 
-// Mengganti renderBranchesGrid lama agar memunculkan tombol Edit & Hapus
 function renderBranchesGrid() {
     const container = document.getElementById('branch-list-container');
     if (!container) return;
@@ -214,8 +221,8 @@ function openEditBranchModal(id) {
     document.getElementById('edit-branch-name').value = branch.name;
     document.getElementById('edit-branch-url').value = branch.url;
     document.getElementById('edit-branch-pin').value = branch.pin || '';
-    document.getElementById('edit-branch-phone').value = branch.phone || ''; // BARU
-    document.getElementById('edit-branch-address').value = branch.address || ''; // BARU
+    document.getElementById('edit-branch-phone').value = branch.phone || ''; 
+    document.getElementById('edit-branch-address').value = branch.address || ''; 
     document.getElementById('editBranchModal').classList.remove('hidden');
 }
 
@@ -229,18 +236,18 @@ async function submitEditBranch() {
 
     if (!name || !url || !pin) return alert("Data cabang dan PIN tidak boleh kosong!");
     
-    // --- ANIMASI LOADING DIMULAI ---
     const btn = document.querySelector('button[onclick="submitEditBranch()"]');
     let originalText = "Update";
     if (btn) {
         originalText = btn.innerHTML;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
-        btn.disabled = true; // Kunci tombol
+        btn.disabled = true; 
     }
     document.getElementById('editBranchModal').classList.add('opacity-50');
 
     try {
-        const payload = { action: 'editBranch', id: id, name: name, url: url, pin: pin, phone: phone, address: address };
+        // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
+        const payload = { action: 'editBranch', apiKey: API_KEY, id: id, name: name, url: url, pin: pin, phone: phone, address: address };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
@@ -255,7 +262,6 @@ async function submitEditBranch() {
         triggerNotification("Perintah update dikirim ke Master.");
         setTimeout(loadMasterDatabase, 1500);
     } finally {
-        // --- KEMBALIKAN TOMBOL KE SEMULA ---
         document.getElementById('editBranchModal').classList.remove('opacity-50');
         if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
@@ -271,13 +277,13 @@ async function deleteBranch(id) {
     triggerNotification("Memproses hapus cabang...");
 
     try {
-        const payload = { action: 'deleteBranch', id: id };
+        // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
+        const payload = { action: 'deleteBranch', apiKey: API_KEY, id: id };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
         if (res.status === 'success') {
             triggerNotification(`Cabang berhasil dihapus!`);
-            // Jika cabang yang dihapus sedang aktif, kosongkan sesi
             const deletedBranch = branches.find(b => b.id === id);
             if (deletedBranch && deletedBranch.url === SCRIPT_URL) {
                 SCRIPT_URL = "";
@@ -356,7 +362,6 @@ async function saveNewCashier() {
 
     if (!name || !pin) return alert("Harap lengkapi nama kasir dan PIN!");
 
-    // --- ANIMASI LOADING DIMULAI ---
     const btn = document.querySelector('button[onclick="saveNewCashier()"]');
     let originalText = "Simpan";
     if (btn) {
@@ -369,7 +374,8 @@ async function saveNewCashier() {
     document.getElementById('cashierModal').classList.add('opacity-50');
 
     try {
-        const payload = { action: 'addCashier', id: cashierId, name: name, pin: pin };
+        // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
+        const payload = { action: 'addCashier', apiKey: API_KEY, id: cashierId, name: name, pin: pin };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
@@ -384,7 +390,6 @@ async function saveNewCashier() {
         triggerNotification(`Perintah simpan ${name} dikirim.`);
         setTimeout(loadMasterDatabase, 1500);
     } finally {
-        // --- KEMBALIKAN TOMBOL KE SEMULA ---
         document.getElementById('cashierModal').classList.remove('opacity-50');
         if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
@@ -411,7 +416,6 @@ async function submitEditCashier() {
 
     if (!name || !pin) return alert("Data tidak boleh kosong!");
     
-    // --- ANIMASI LOADING DIMULAI ---
     const btn = document.querySelector('button[onclick="submitEditCashier()"]');
     let originalText = "Update";
     if (btn) {
@@ -423,7 +427,8 @@ async function submitEditCashier() {
     document.getElementById('editCashierModal').classList.add('opacity-50');
 
     try {
-        const payload = { action: 'editCashier', id: id, name: name, pin: pin };
+        // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
+        const payload = { action: 'editCashier', apiKey: API_KEY, id: id, name: name, pin: pin };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
@@ -438,7 +443,6 @@ async function submitEditCashier() {
         triggerNotification("Perintah update dikirim.");
         setTimeout(loadMasterDatabase, 1500);
     } finally {
-        // --- KEMBALIKAN TOMBOL KE SEMULA ---
         document.getElementById('editCashierModal').classList.remove('opacity-50');
         if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
     }
@@ -449,7 +453,8 @@ async function deleteCashier(id) {
     triggerNotification("Memproses hapus data...");
 
     try {
-        const payload = { action: 'deleteCashier', id: id };
+        // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
+        const payload = { action: 'deleteCashier', apiKey: API_KEY, id: id };
         const response = await fetch(MASTER_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const res = await response.json();
 
@@ -488,13 +493,17 @@ async function fetchBranchAnalyticsData() {
     showLoadingStates();
 
     try {
-        const response = await fetch(`${SCRIPT_URL}?action=read`);
+        // PERBAIKAN: TAMBAH API KEY PADA SAAT REQUEST GET UNTUK BACA DATA CABANG
+        const response = await fetch(`${SCRIPT_URL}?action=read&apiKey=${API_KEY}`);
         const result = await response.json();
 
         if (result && (result.transactions || result.expenses)) {
             orders = result.transactions || [];
             expenses = result.expenses || [];
             applyAnalyticsFilter();
+        } else if (result.error) {
+            renderEmptyStates();
+            triggerNotification("Akses Ditolak Server Cabang: " + result.error);
         } else {
             renderEmptyStates();
             triggerNotification("Gagal membaca struktur database cabang.");
@@ -511,7 +520,6 @@ function toggleCustomDateFilter() {
     const containerCustom = document.getElementById('custom-date-container');
     const containerMonth = document.getElementById('custom-month-container');
 
-    // Sembunyikan semuanya dulu
     if (containerCustom) containerCustom.classList.add('hidden');
     if (containerMonth) containerMonth.classList.add('hidden');
 
@@ -541,22 +549,15 @@ function applyAnalyticsFilter() {
     const todayStr = jktTime.toISOString().split('T')[0];
     const currentMonthStr = `${jktTime.getFullYear()}-${String(jktTime.getMonth() + 1).padStart(2, '0')}`;
     
-    // --- PERBAIKAN LOGIKA KALENDER ---
-    // Buat objek kalender untuk batas "Hari Ini"
     const todayObj = new Date(todayStr);
-    
-    // Buat batas mutlak 7 hari & 30 hari ke belakang
     const past7Days = new Date(todayStr);
     past7Days.setDate(past7Days.getDate() - 7);
-    
     const past30Days = new Date(todayStr);
     past30Days.setDate(past30Days.getDate() - 30);
-    // ---------------------------------
 
     let filteredOrders = [];
     let filteredExpenses = [];
 
-    // Logika Filter Rentang Waktu & Bulan
     if (range === 'custom') {
         const startVal = document.getElementById('filter-start').value;
         const endVal = document.getElementById('filter-end').value;
@@ -575,12 +576,10 @@ function applyAnalyticsFilter() {
         filteredOrders = orders.filter(o => {
             const p = parseDateString(o.date);
             if (!p) return false;
-            
-            const itemDate = new Date(p.dateStr); // Ubah tanggal nota jadi objek kalender
+            const itemDate = new Date(p.dateStr); 
             
             if (range === 'hari-ini') return p.dateStr === todayStr;
             if (range === 'bulan-ini') return p.monthStr === currentMonthStr;
-            // Gunakan perbandingan kalender murni (Hanya izinkan data sampai Hari Ini)
             if (range === '7-hari') return itemDate >= past7Days && itemDate <= todayObj;
             if (range === '30-hari') return itemDate >= past30Days && itemDate <= todayObj;
             return true;
@@ -589,7 +588,6 @@ function applyAnalyticsFilter() {
         filteredExpenses = expenses.filter(e => {
             const p = parseDateString(e.tanggal || e.date);
             if (!p) return false;
-            
             const itemDate = new Date(p.dateStr);
             
             if (range === 'hari-ini') return p.dateStr === todayStr;
@@ -600,7 +598,6 @@ function applyAnalyticsFilter() {
         });
     }
 
-    // Pemisahan Lunas & Belum Bayar
     const validOrders = filteredOrders.filter(o => o.status !== "Dibatalkan");
     const lunasOrders = validOrders.filter(o => o.paymentStatus !== "Belum Bayar");
     const piutangOrders = validOrders.filter(o => o.paymentStatus === "Belum Bayar");
@@ -652,7 +649,6 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
 
     if (cashflowChartInstance) cashflowChartInstance.destroy();
 
-    // 1. CARI TAHU RENTANG WAKTU (Mendeteksi Harian vs Bulanan)
     let minDate = Infinity;
     let maxDate = -Infinity;
     
@@ -664,7 +660,6 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
         }
     });
 
-    // JIKA rentang lebih dari 60 hari atau memilih "Semua", grafik OTOMATIS jadi BULANAN
     const dayDiff = (maxDate - minDate) / (1000 * 60 * 60 * 24);
     const isMonthlyGroup = dayDiff > 60 || document.getElementById('analytics-filter-range').value === 'semua';
 
@@ -674,7 +669,7 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
         const parsed = parseDateString(o.date);
         if (!parsed) return;
         
-        const key = isMonthlyGroup ? parsed.monthStr : parsed.dateStr; // <--- Kunci Pengelompokan
+        const key = isMonthlyGroup ? parsed.monthStr : parsed.dateStr; 
         
         if (!dateMap[key]) dateMap[key] = { income: 0, expense: 0, piutang: 0 };
         
@@ -694,14 +689,13 @@ function generateCashflowChart(filteredOrders, filteredExpenses) {
         dateMap[key].expense += Number(e.nominal || 0);
     });
 
-    // 2. FORMAT NAMA LABEL GRAFIK (Misal: "Agt 2026" atau "15 Agt")
     const sortedKeys = Object.keys(dateMap).sort();
     const formattedLabels = sortedKeys.map(k => {
         if (isMonthlyGroup) {
             const d = new Date(k + "-01");
-            return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }); // Output: Jan 2026
+            return d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }); 
         } else {
-            return new Date(k).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }); // Output: 15 Jan
+            return new Date(k).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }); 
         }
     });
     
@@ -738,12 +732,7 @@ function renderExpensesTable(filteredExpenses) {
         return;
     }
 
-    // Urutkan dari yang terbaru
     const sortedExpenses = [...filteredExpenses].sort((a, b) => new Date(b.tanggal || b.date) - new Date(a.tanggal || a.date));
-
-    // ==============================================================
-    // ANTI-FREEZE: Batasi hanya menggambar 100 baris di layar
-    // ==============================================================
     const MAX_RENDER = 100;
     const expensesToRender = sortedExpenses.slice(0, MAX_RENDER);
 
@@ -786,12 +775,7 @@ function renderIncomeTable(filteredOrders) {
         return;
     }
 
-    // Urutkan nota dari yang terbaru
     const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    // ==============================================================
-    // ANTI-FREEZE: Batasi hanya menggambar 100 baris di layar
-    // ==============================================================
     const MAX_RENDER = 100;
     const ordersToRender = sortedOrders.slice(0, MAX_RENDER);
 
@@ -834,7 +818,6 @@ function renderIncomeTable(filteredOrders) {
 function exportIncomeToExcel() {
     if (currentFilteredOrders.length === 0) return alert("Tidak ada data pemasukan untuk diexport pada periode ini.");
 
-    // Urutkan data Excel dari yang terbaru juga agar rapi
     const sortedDataForExcel = [...currentFilteredOrders].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     const worksheet = XLSX.utils.json_to_sheet(sortedDataForExcel);
@@ -908,50 +891,40 @@ function exportExpensesToExcel() {
 // ==========================================================================
 
 function handleIncomeSearch() {
-    // Ambil kata kunci yang diketik, ubah ke huruf kecil semua
     const query = document.getElementById('search-income').value.toLowerCase();
 
-    // Jika kolom pencarian kosong, kembalikan ke data asli (hasil filter rentang waktu)
     if (!query) {
         renderIncomeTable(currentFilteredOrders);
         return;
     }
 
-    // Lakukan penyaringan data
     const searchedData = currentFilteredOrders.filter(o => {
         const id = (o.id || '').toLowerCase();
         const customer = (o.customer || '').toLowerCase();
         const service = (o.service || '').toLowerCase();
 
-        // Cari apakah ada kecocokan di ID Nota, Nama Pelanggan, atau Nama Paket
         return id.includes(query) || customer.includes(query) || service.includes(query);
     });
 
-    // Tampilkan data hasil pencarian
     renderIncomeTable(searchedData);
 }
 
 function handleExpenseSearch() {
-    // Ambil kata kunci yang diketik, ubah ke huruf kecil semua
     const query = document.getElementById('search-expense').value.toLowerCase();
 
-    // Jika kolom pencarian kosong, kembalikan ke data asli
     if (!query) {
         renderExpensesTable(currentFilteredExpenses);
         return;
     }
 
-    // Lakukan penyaringan data
     const searchedData = currentFilteredExpenses.filter(e => {
         const ket = (e.keterangan || e.keperluan || e.item || '').toLowerCase();
         const pic = (e.pic || '').toLowerCase();
         const kat = (e.kategori || '').toLowerCase();
 
-        // Cari apakah ada kecocokan di Keterangan, Nama PIC, atau Kategori
         return ket.includes(query) || pic.includes(query) || kat.includes(query);
     });
 
-    // Tampilkan data hasil pencarian
     renderExpensesTable(searchedData);
 }
 
@@ -982,10 +955,8 @@ function processBackup() {
     let filterOrders = [...orders];
     let filterExpenses = [...expenses];
     
-    // Default nama waktu jika user memilih "Semua Waktu"
     let timeLabel = "Full_Backup"; 
 
-    // Helper untuk mengubah tanggal
     const parseDateString = (dateStr) => {
         if (!dateStr) return null;
         try {
@@ -998,12 +969,10 @@ function processBackup() {
         } catch (e) { return null; }
     };
 
-    // Jika user memilih filter Tanggal Spesifik
     if (mode === 'date') {
         const picker = document.getElementById('backup-input-date').value;
         if (!picker) return alert("Pilih tanggal terlebih dahulu!");
         
-        // Ubah format menjadi "Tanggal_13-06-2026"
         const d = new Date(picker);
         const tgl = String(d.getDate()).padStart(2, '0');
         const bln = String(d.getMonth() + 1).padStart(2, '0');
@@ -1014,12 +983,10 @@ function processBackup() {
         filterExpenses = expenses.filter(e => { const p = parseDateString(e.tanggal || e.date); return p && p.dateStr === picker; });
         
     } 
-    // Jika user memilih filter Bulan & Tahun
     else if (mode === 'month') {
         const picker = document.getElementById('backup-input-month').value;
         if (!picker) return alert("Pilih bulan terlebih dahulu!");
         
-        // Ubah format menjadi "Bulan_Juni_2026"
         const d = new Date(picker + "-01"); 
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         timeLabel = `Bulan_${namaBulan[d.getMonth()]}_${d.getFullYear()}`;
@@ -1032,12 +999,10 @@ function processBackup() {
         return alert("Tidak ada data pada rentang waktu tersebut di cabang ini.");
     }
 
-    // Proses pembuatan Excel
     const wb = XLSX.utils.book_new();
     if(filterOrders.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterOrders), "Pemasukan");
     if(filterExpenses.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filterExpenses), "Pengeluaran");
     
-    // Merakit nama file dinamis sesuai pilihan
     const safeTenantName = typeof tenantName !== 'undefined' ? tenantName.replace(/\s+/g, '_') : 'Cabang';
     const fileName = `Backup_${safeTenantName}_${timeLabel}.xlsx`;
     
@@ -1056,38 +1021,32 @@ function processBackup() {
 // ====================================================================
 
 function confirmClearData() {
-    // Pastikan owner sudah memilih cabang yang ingin dihapus datanya
     if (!SCRIPT_URL) return alert("Pilih cabang terlebih dahulu di menu Setting sebelum menghapus data!");
 
-    // 1. Peringatan Berlapis Pertama
     const isBackedUp = confirm(`PERINGATAN!\n\nApakah Anda SUDAH mem-backup data (Excel) untuk cabang ${tenantName}?\n\nData yang dihapus tidak bisa dikembalikan lagi.`);
     if (!isBackedUp) {
         return alert("Aksi dibatalkan. Silakan lakukan Backup Data terlebih dahulu.");
     }
 
-    // 2. Keamanan Berlapis Kedua (Wajib ketik HAPUS)
     const typingConfirm = prompt(`Ketik kata HAPUS (huruf besar) untuk mengonfirmasi pembersihan seluruh database di cabang ${tenantName}:`);
     if (typingConfirm !== "HAPUS") {
         return alert("Konfirmasi gagal. Data batal dikosongkan.");
     }
 
-    // 3. Eksekusi Hapus dari Tampilan Aplikasi (Nol-kan semua)
     orders = [];
     expenses = [];
     
-    // Refresh tampilan analitik dan tabel agar kembali kosong
     applyAnalyticsFilter();
 
-    // 4. Perintahkan Google Sheets Cabang untuk benar-benar menghapus isinya
     if(typeof triggerNotification === "function") triggerNotification("Sedang menghapus database di server...");
     
+    // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
     fetch(SCRIPT_URL, { 
         method: 'POST', 
         mode: 'no-cors', 
         headers: {'Content-Type': 'application/json'}, 
-        body: JSON.stringify({ action: "clearAllData" }) 
+        body: JSON.stringify({ action: "clearAllData", apiKey: API_KEY }) 
     }).then(() => {
-        // Tunda alert sebentar agar notifikasi sempat muncul
         setTimeout(() => {
             alert(`✅ Semua data transaksi dan pengeluaran di cabang ${tenantName} telah berhasil dibersihkan dari server.`);
         }, 500);
@@ -1097,10 +1056,8 @@ function confirmClearData() {
     });
 }
 
-
 async function saveNewOwnerPin() {
     try {
-        // 1. Cek apakah kotak inputnya benar-benar ada di HTML
         const elOldPin = document.getElementById('old-owner-pin');
         const elNewPin = document.getElementById('new-owner-pin');
         
@@ -1111,19 +1068,25 @@ async function saveNewOwnerPin() {
         const oldPin = elOldPin.value.trim();
         const newPin = elNewPin.value.trim();
         
-        // 2. Validasi input kosong
         if (!oldPin) return alert("Masukkan PIN lama Anda terlebih dahulu!");
         if (newPin.length < 4) return alert("PIN baru harus minimal 4 angka!");
 
-        // 3. Kunci tombol agar tidak di-klik dua kali
         const btn = document.getElementById('btn-simpan-pin');
         const originalText = btn.innerHTML;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
         btn.disabled = true;
 
-        // 4. Tanya ke server
-        const checkResponse = await fetch(`${MASTER_SCRIPT_URL}?action=getOwnerPin`);
+        // PERBAIKAN: TAMBAH API KEY PADA REQUEST GET
+        const checkResponse = await fetch(`${MASTER_SCRIPT_URL}?action=getOwnerPin&apiKey=${API_KEY}`);
         const checkResult = await checkResponse.json();
+        
+        if (checkResult.error) {
+             alert("Akses Ditolak Server: " + checkResult.error);
+             btn.innerHTML = originalText;
+             btn.disabled = false;
+             return;
+        }
+
         const validPin = checkResult.pin || "1234";
 
         if (oldPin !== validPin) {
@@ -1133,10 +1096,10 @@ async function saveNewOwnerPin() {
             return; 
         }
 
-        // 5. Simpan ke server
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
         
-        const payload = { action: 'updateOwnerPin', pin: newPin };
+        // PERBAIKAN: TAMBAH API KEY DI DALAM PAYLOAD POST
+        const payload = { action: 'updateOwnerPin', apiKey: API_KEY, pin: newPin };
         const response = await fetch(MASTER_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -1151,12 +1114,10 @@ async function saveNewOwnerPin() {
             alert("Gagal mengubah PIN di server Google.");
         }
 
-        // Kembalikan tombol seperti semula
         btn.innerHTML = originalText;
         btn.disabled = false;
 
     } catch(e) {
-        // Tangkap jika ada error tersembunyi
         alert("Terjadi masalah pada sistem JS: " + e.message);
         
         const btn = document.getElementById('btn-simpan-pin');
